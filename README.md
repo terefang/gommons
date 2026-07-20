@@ -1,6 +1,9 @@
 # gommons
 
-an opinionated golang commons utility library
+`gommons` is an opinionated collection of common Go libraries 
+and utilities for building applications the pragmatic way. 
+The name is a play on Go and commons—because every project 
+eventually grows the same set of well-tested building blocks.
 
 ## Versioning
 

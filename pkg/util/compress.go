@@ -25,9 +25,11 @@ package util
 
 import (
 	"archive/zip"
+	"bufio"
 	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
+	"compress/zlib"
 	"fmt"
 	"io"
 	"os"
@@ -537,3 +539,32 @@ func ZstdReadFile(path string) ([]byte, error) {
 	defer r.Close()
 	return io.ReadAll(r)
 }
+
+// -----------------------------------------------
+// added by Alfred Reibenschuh
+
+func InlineFlateCompress(plain []byte) []byte {
+	var _buf bytes.Buffer
+	_bufwr := bufio.NewWriter(&_buf)
+	_flate := zlib.NewWriter(_bufwr)
+	_flate.Write(plain)
+	_flate.Flush()
+	_flate.Close()
+	_bufwr.Flush()
+	return _buf.Bytes()
+}
+
+//func InlineFlateDecompress(plain []byte) []byte {
+//	var _buf bytes.Buffer
+//	_buf.Write(plain)
+//	_bufrd := bufio.NewReader(&_buf)
+//	_flate, _ := zlib.NewReader(_bufrd)
+//
+//	_out := make([]byte, 0)
+//	_b := make([]byte, 8192)
+//	for _n, _err := _flate.Read(_b); _err == nil; {
+//		_out = append(_out, _b[:_n]...)
+//	}
+//	_flate.Close()
+//	return _out
+//}

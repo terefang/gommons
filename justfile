@@ -46,4 +46,4 @@ build:
     export PATH=$GOROOT/bin:$PATH
     VERSION=$(shtool version -l txt ./version.txt)
     shtool version -n "{{EXE}}" -d long -l txt ./version.txt >{{XDIR}}/version_info.txt
-    go build
+    #go build
