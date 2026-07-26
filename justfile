@@ -22,11 +22,12 @@ set-drel: do-inc-level
 
 git-push-level: inc-level git-push
 
-git-push:
+git-push: (git-push-msg "upd")
+git-push-msg _MSG:
     #!/bin/sh
     VERSION=$(shtool version -l txt ./version.txt)
     TIME=$(date '+%F %T')
-    git commit --all -m "upd to v$VERSION on $TIME"
+    git commit --all -m "{{_MSG}} - v$VERSION on $TIME"
     git push
 
 inc-version: do-inc-version update-version-info
@@ -56,18 +57,20 @@ do-set-version _VERSION:
 
 make-update: git-push-level
 
-make-prel: set-drel git-push
+make-prel: (make-prel-msg "upd")
+make-prel-msg _MSG: set-drel git-push
     #!/bin/bash
     VERSION=$(shtool version -l txt ./version.txt)
     VERL=$(shtool version -l text -d long ./version.txt)
-    MESSAGE="{{EXE}} automated pre-release version $VERL"
+    MESSAGE="{{_MSG}} - {{EXE}} automated pre-release version $VERL"
     gh release create v$VERSION --notes "$MESSAGE" --prerelease out/*
 
-make-rel: set-drel git-push
+make-rel: (make-rel-msg "upd")
+make-rel-msg _MSG: set-drel git-push
     #!/bin/bash
     VERSION=$(shtool version -l txt ./version.txt)
     VERL=$(shtool version -l text -d long ./version.txt)
-    MESSAGE="{{EXE}} automated release version $VERL"
+    MESSAGE="{{_MSG}} - {{EXE}} automated release version $VERL"
     gh release create v$VERSION --notes "$MESSAGE" out/*
 
 build: update-version-info

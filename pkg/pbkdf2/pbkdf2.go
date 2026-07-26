@@ -2,6 +2,7 @@ package pbkdf2
 
 import (
 	"crypto/hmac"
+	"crypto/sha512"
 	"encoding/binary"
 	"hash"
 )
@@ -53,4 +54,8 @@ func GenerateKey(password, salt []byte, iterCount, keyLen int, h func() hash.Has
 	}
 
 	return dk[0:keyLen]
+}
+
+func GenerateKeySecure(password, salt []byte, iterCount, keyLen int) []byte {
+	return GenerateKey(password, salt, iterCount, keyLen, sha512.New)
 }
