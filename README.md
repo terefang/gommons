@@ -1,3 +1,22 @@
+# cmdbox
+
+```
+Please specify a valid subcommand, choices are:
+
+        bash-completion Generate and output a bash completion-script.
+        choose-file     Choose a file, interactively.
+        choose-stdin    Choose an item from STDIN, interactively.
+        chronic         Run a command quietly, if it succeeds.
+        commands        Show all available sub-commands.
+        gen-ca          generate a root ca key and certificate.
+        gen-key         generate keys in pem format.
+        gen-pass        Generate a random password and hashes.
+        help            Show usage information.
+        template        Populate a template-file.
+        version         print version info
+        xlua            extended lua environment
+```
+
 # gommons
 
 `gommons` is an opinionated collection of common Go libraries 
