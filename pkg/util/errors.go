@@ -80,22 +80,6 @@ func GetErr(errs ...error) error {
 	return nil
 }
 
-func IsWindows() bool {
-	return strings.Contains(runtime.GOOS, "windows")
-}
-
-func IsMac() bool {
-	return strings.Contains(runtime.GOOS, "darwin")
-}
-
-func IsWinOrMac() bool {
-	return IsWindows() || IsMac()
-}
-
-func IsLinux() bool {
-	return strings.Contains(runtime.GOOS, "linux")
-}
-
 func GetCallstackFrames(skipFrames int) []string {
 	var callers [32]uintptr
 	n := runtime.Callers(skipFrames+1, callers[:])

@@ -22,7 +22,7 @@ const (
 	SNMPv3 SNMPVersion = 3
 )
 
-//go:generate stringer -type=SNMPError
+// //--go:generate stringer -type=SNMPError
 type SNMPError uint8 // SNMPError is the type for standard SNMP errors.
 
 // SNMP Errors

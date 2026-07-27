@@ -1,9 +1,12 @@
 #!/usr/bin/env just --justfile
 
 XDIR := justfile_directory()
+XDIST := XDIR + "/dist"
 EXE := "gommons"
 CLI := "cmdbox"
 OSARCH := os()+"-"+arch()
+
+GOARCHS := "linux,amd64 linux,arm64 windows,amd64 windows,arm64 darwin,amd64 darwin,arm64"
 
 update-version-info:
     #!/bin/sh
@@ -63,7 +66,7 @@ make-prel-msg _MSG: set-drel git-push
     VERSION=$(shtool version -l txt ./version.txt)
     VERL=$(shtool version -l text -d long ./version.txt)
     MESSAGE="{{_MSG}} - {{EXE}} automated pre-release version $VERL"
-    gh release create v$VERSION --notes "$MESSAGE" --prerelease out/*
+    gh release create v$VERSION --notes "$MESSAGE" --prerelease
 
 make-rel: (make-rel-msg "upd")
 make-rel-msg _MSG: set-drel git-push
@@ -71,12 +74,36 @@ make-rel-msg _MSG: set-drel git-push
     VERSION=$(shtool version -l txt ./version.txt)
     VERL=$(shtool version -l text -d long ./version.txt)
     MESSAGE="{{_MSG}} - {{EXE}} automated release version $VERL"
-    gh release create v$VERSION --notes "$MESSAGE" out/*
+    gh release create v$VERSION --notes "$MESSAGE"
+
+make-upload:
+    #!/bin/bash
+    VERSION=$(shtool version -l txt ./version.txt)
+    gh release upload v$VERSION {{XDIST}}/*
+
+make-prel-full _MSG: (make-prel-msg _MSG) build make-upload
+make-rel-full _MSG: (make-rel-msg _MSG) build make-upload
 
 build: update-version-info
     #!/bin/sh
     export GOROOT=${HOME}/bin/go
     export PATH=$GOROOT/bin:$PATH
     VERSION=$(shtool version -l txt ./version.txt)
-    rm -rf {{XDIR}}/out; mkdir -p {{XDIR}}/out
-    go build -o "{{XDIR}}/out/{{CLI}}-${VERSION}-{{OSARCH}}" cmd/{{CLI}}/*.go
+    rm -rf {{XDIST}}; mkdir -p {{XDIST}}
+    #CGO_ENABLED=1 CC=musl-gcc \
+    #  go build -ldflags="-linkmode external -extldflags '-static'"
+    for XTYPE in {{GOARCHS}}; do
+        _gos=${XTYPE%%,*}
+        _garch=${XTYPE##*,}
+        _gexe=
+        case $_gos in
+            windows)
+                _gexe=.exe
+                ;;
+            *)
+                _gexe=
+                ;;
+        esac
+        echo "building ${_gos} ${_garch} ..."
+        GOOS=${_gos} GOARCH=${_garch} CGO_ENABLED=0 go build -buildmode=pie -o "{{XDIST}}/{{CLI}}-${VERSION}-${_gos}-${_garch}${_gexe}" cmd/{{CLI}}/*.go
+    done

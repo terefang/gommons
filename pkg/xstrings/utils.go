@@ -1,9 +1,11 @@
-package util
+package xstrings
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/terefang/gommons/pkg/util"
 )
 
 // NormalizeNewlinesInPlace changes CRLF (Windows) and
@@ -115,7 +117,7 @@ func AppendOrReplaceInText(orig string, toAppend string, delim string) string {
 		return CollapseMultipleNewlines(orig + content)
 	}
 	end := strings.Index(orig[start+1:], delim)
-	PanicIf(end == -1, "didn't find end delim")
+	util.PanicIf(end == -1, "didn't find end delim")
 	end += start + 1
 	orig = orig[:start] + "\n\n" + orig[end+len(delim):]
 	res := AppendNewline(&orig) + content
@@ -124,23 +126,23 @@ func AppendOrReplaceInText(orig string, toAppend string, delim string) string {
 
 func AppendOrReplaceInFileMust(path string, toAppend string, delim string) bool {
 	st, err := os.Lstat(path)
-	Must(err)
+	util.Must(err)
 	perm := st.Mode().Perm()
 	orig, err := os.ReadFile(path)
-	Must(err)
+	util.Must(err)
 	newContent := AppendOrReplaceInText(string(orig), toAppend, delim)
 	if newContent == string(orig) {
 		return false
 	}
 	err = os.WriteFile(path, []byte(newContent), perm)
-	Must(err)
+	util.Must(err)
 	return true
 }
 
 func ExpandTildeInPath(s string) string {
 	if strings.HasPrefix(s, "~") {
 		dir, err := os.UserHomeDir()
-		Must(err)
+		util.Must(err)
 		return dir + s[1:]
 	}
 	return s
@@ -157,7 +159,7 @@ func ParseEnvMust(d []byte) map[string]string {
 			continue
 		}
 		parts := strings.SplitN(line, "=", 2)
-		PanicIf(len(parts) != 2, "invalid line '%s' in .env\n", line)
+		util.PanicIf(len(parts) != 2, "invalid line '%s' in .env\n", line)
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
 		m[key] = val

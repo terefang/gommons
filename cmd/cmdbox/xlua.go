@@ -13,6 +13,7 @@ import (
 	rt "github.com/arnodel/golua/runtime"
 	"github.com/terefang/gommons/pkg/ctokener"
 	"github.com/terefang/gommons/pkg/subcmd"
+	"github.com/terefang/gommons/pkg/xdg"
 	"github.com/terefang/gommons/pkg/xlua"
 )
 
@@ -135,7 +136,7 @@ func (r XluaCommand) Repl(_lua *rt.Runtime) int {
 	goline.SetCompletionCallback(xluaReplComplete)
 	goline.SetHintsCallback(xluaReplHint)
 	fmt.Println(">>> entering repl mode, use '\\q' to quit.")
-	if err := goline.HistoryLoad(xluaHistroyFile); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := goline.HistoryLoad(xdg.UserHomePath(xluaHistroyFile)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		fmt.Fprintf(os.Stderr, ">>> load history: %v\n", err)
 	} else {
 		fmt.Fprintf(os.Stderr, ">>> read history from %s\n", xluaHistroyFile)
@@ -147,7 +148,7 @@ func (r XluaCommand) Repl(_lua *rt.Runtime) int {
 		}
 
 		if _line == "\\quit" || _line == "\\q" {
-			goline.HistorySave(xluaHistroyFile)
+			goline.HistorySave(xdg.UserHomePath(xluaHistroyFile))
 			return 0
 		}
 		goline.HistoryAdd(_line)
