@@ -68,7 +68,15 @@ const (
 	DerOctetstring BERType = AsnUniversal | 0x04
 	DerNull        BERType = AsnUniversal | 0x05
 	DerUOid        BERType = AsnUniversal | 0x06
-	DerSequence    BERType = AsnConstructor | 0x10
+
+	DerUTF8String      BERType = AsnUniversal | 0x0c
+	DerNumericString   BERType = AsnUniversal | 0x12
+	DerPrintableString BERType = AsnUniversal | 0x13
+	DerIA5String       BERType = AsnUniversal | 0x16
+	DerUniversalString BERType = AsnUniversal | 0x1c // UCS-4
+	DerBMPString       BERType = AsnUniversal | 0x1e // UCS-2
+
+	DerSequence BERType = AsnConstructor | 0x10
 
 	SnmpIpaddress BERType = AsnApplication | 0x00
 	SnmpCounter   BERType = AsnApplication | 0x01

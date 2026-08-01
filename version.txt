@@ -2,5 +2,5 @@
   ./version.txt -- Version Information for gommons (syntax: Text)
   [automatically generated and maintained by GNU shtool]
 
-  This is gommons, Version 2026.07.6 (27-Jul-2026)
+  This is gommons, Version 2026.08.7 (01-Aug-2026)
 

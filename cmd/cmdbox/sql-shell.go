@@ -8,7 +8,12 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/andrewchambers/goline"
+	// _ "github.com/duckdb/duckdb-go/v2"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/microsoft/go-mssqldb"
 	"github.com/terefang/gommons/pkg/subcmd"
 	"github.com/terefang/gommons/pkg/xstrings"
 	_ "modernc.org/sqlite"

@@ -1,16 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"flag"
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
+    "bufio"
+    "flag"
+    "fmt"
+    "os"
+    "os/exec"
+    "strings"
 
-	"github.com/terefang/gommons/pkg/chooseui"
-	"github.com/terefang/gommons/pkg/stemplate"
-	"github.com/terefang/gommons/pkg/subcmd"
+    "github.com/terefang/gommons/pkg/stemplate"
+    "github.com/terefang/gommons/pkg/subcmd"
+    "github.com/terefang/gommons/pkg/xtui/chooseui"
 )
 
 func init() {

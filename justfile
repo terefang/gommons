@@ -6,7 +6,8 @@ EXE := "gommons"
 CLI := "cmdbox"
 OSARCH := os()+"-"+arch()
 
-GOARCHS := "linux,amd64 linux,arm64 windows,amd64 windows,arm64 darwin,amd64 darwin,arm64"
+## GOARCHS := "linux,amd64 linux,arm64 windows,amd64 windows,arm64 darwin,amd64 darwin,arm64"
+GOARCHS := "linux,amd64 linux,arm64 darwin,amd64 darwin,arm64"
 
 update-version-info:
     #!/bin/sh
@@ -81,29 +82,60 @@ make-upload:
     VERSION=$(shtool version -l txt ./version.txt)
     gh release upload v$VERSION {{XDIST}}/*
 
-make-prel-full _MSG: (make-prel-msg _MSG) build make-upload
-make-rel-full _MSG: (make-rel-msg _MSG) build make-upload
+make-prel-full _MSG: (make-prel-msg _MSG) build-all make-upload
+make-rel-full _MSG: (make-rel-msg _MSG) build-all make-upload
 
-build: update-version-info
+build: (build-osarch-out "linux" "amd64" CLI)
+
+build-all:
     #!/bin/sh
-    export GOROOT=${HOME}/bin/go
-    export PATH=$GOROOT/bin:$PATH
-    VERSION=$(shtool version -l txt ./version.txt)
     rm -rf {{XDIST}}; mkdir -p {{XDIST}}
-    #CGO_ENABLED=1 CC=musl-gcc \
-    #  go build -ldflags="-linkmode external -extldflags '-static'"
     for XTYPE in {{GOARCHS}}; do
         _gos=${XTYPE%%,*}
         _garch=${XTYPE##*,}
-        _gexe=
-        case $_gos in
-            windows)
-                _gexe=.exe
-                ;;
-            *)
-                _gexe=
-                ;;
-        esac
-        echo "building ${_gos} ${_garch} ..."
-        GOOS=${_gos} GOARCH=${_garch} CGO_ENABLED=0 go build -buildmode=pie -o "{{XDIST}}/{{CLI}}-${VERSION}-${_gos}-${_garch}${_gexe}" cmd/{{CLI}}/*.go
+        cd {{XDIR}} && just -f justfile build-osarch "${_gos}" "${_garch}"
     done
+
+build-osarch _GOS _GARCH:
+    #!/bin/sh
+    VERSION=$(shtool version -l txt ./version.txt)
+    _gos={{_GOS}}
+    _garch={{_GARCH}}
+    _gexe=
+    case $_gos in
+        windows)
+            _gexe=.exe
+            ;;
+        *)
+            _gexe=
+            ;;
+    esac
+    _gout={{CLI}}-${VERSION}-${_gos}-${_garch}${_gexe}
+    cd {{XDIR}} && just -f justfile build-osarch-out "${_gos}" "${_garch}" "${_gout}"
+
+build-osarch-out _GOS _GARCH _GOUT: update-version-info
+    #!/bin/sh
+    export GOROOT=${HOME}/bin/go
+    export PATH=$GOROOT/bin:$PATH
+    mkdir -p {{XDIST}}
+    #CGO_ENABLED=1 CC=musl-gcc \
+    #  go build -ldflags="-linkmode external -extldflags '-static'"
+    _gos={{_GOS}}
+    _garch={{_GARCH}}
+    _gout={{_GOUT}}
+    echo "building ${_gos} ${_garch} ... ${_gout}"
+    GOOS=${_gos} GOARCH=${_garch} CGO_ENABLED=0 go build -buildmode=pie -o "{{XDIST}}/${_gout}" cmd/{{CLI}}/*.go
+
+test-skey: build
+    #!/bin/sh -x
+    mkdir -p {{XDIR}}/out
+    P=$({{XDIST}}/cmdbox gen-skey -seed a11y -uuid -bytes 1024 -key {{XDIR}}/out/secret.key)
+    cat {{XDIR}}/out/secret.key
+    echo "$P"
+    {{XDIST}}/cmdbox skey-encrypt -password "$P" -key {{XDIR}}/out/secret.key {{XDIR}}/out/secret.key {{XDIR}}/out/encrypt.bin
+    {{XDIST}}/cmdbox skey-encrypt -password "$P" -key {{XDIR}}/out/secret.key -pem {{XDIR}}/out/secret.key {{XDIR}}/out/encrypt.txt
+    hexdump -C < {{XDIR}}/out/encrypt.bin
+    {{XDIST}}/cmdbox skey-encrypt -decrypt -password "$P" -key {{XDIR}}/out/secret.key {{XDIR}}/out/encrypt.bin {{XDIR}}/out/decrypt.bin
+    {{XDIST}}/cmdbox skey-encrypt -decrypt -password "$P" -key {{XDIR}}/out/secret.key -pem {{XDIR}}/out/encrypt.txt {{XDIR}}/out/decrypt.txt
+    diff -u {{XDIR}}/out/secret.key {{XDIR}}/out/decrypt.bin
+    diff -u {{XDIR}}/out/secret.key {{XDIR}}/out/decrypt.txt

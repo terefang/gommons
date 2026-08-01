@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/terefang/gommons/pkg/chooseui"
 	"github.com/terefang/gommons/pkg/stemplate"
 	"github.com/terefang/gommons/pkg/subcmd"
+	"github.com/terefang/gommons/pkg/xtui/chooseui"
 )
 
 func init() {

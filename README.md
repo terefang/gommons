@@ -10,7 +10,7 @@ Please specify a valid subcommand, choices are:
         commands        Show all available sub-commands.
         gen-ca          generate a root ca key and certificate.
         gen-key         generate keys in pem format.
-        gen-pass        Generate a random password and hashes.
+        gen-pass        Generate a random password and passwd/xcrypt hashes.
         help            Show usage information.
         template        Populate a template-file.
         version         print version info
