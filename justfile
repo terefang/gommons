@@ -110,7 +110,8 @@ build-osarch _GOS _GARCH:
             _gexe=
             ;;
     esac
-    _gout={{CLI}}-${VERSION}-${_gos}-${_garch}${_gexe}
+    #_gout={{CLI}}-${VERSION}-${_gos}-${_garch}${_gexe}
+    _gout={{CLI}}-${_gos}-${_garch}${_gexe}
     cd {{XDIR}} && just -f justfile build-osarch-out "${_gos}" "${_garch}" "${_gout}"
 
 build-osarch-out _GOS _GARCH _GOUT: update-version-info
