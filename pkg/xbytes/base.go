@@ -32,3 +32,7 @@ func FromBase32(s string) ([]byte, error) {
     }
     return base32.StdEncoding.DecodeString(clean)
 }
+
+func ToBase32(b []byte) []byte {
+    return []byte(base32.StdEncoding.EncodeToString(b))
+}

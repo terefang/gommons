@@ -1,45 +1,38 @@
 package xotp
 
-import "encoding/base64"
+import "time"
 
-// DefaultTOTP generates a TOTP for the current time step using the default
-// settings (compatible with Google Authenticator) based on the given key.
-// An error is reported if the key is invalid.
-func DefaultTOTP(key string) (string, error) {
-    std, err := Config{}.WithKey(key)
+func (f *OtpFob) TOTP() (string, error) {
+    counter := time.Now().Unix()
+    return f.TOTPWithTime(uint64(counter))
+}
+
+func (f *OtpFob) TOTPWithTime(t uint64) (string, error) {
+    counter := t
+    counter /= uint64(f.Period)
+    passcode, err := f.GenerateCode(counter)
     if err != nil {
         return "", err
     }
-    return std.TOTP(), nil
+    return passcode, nil
 }
 
-// TOTP returns the TOTP code for the current time step.  If the current time
-// step value is t, this is equivalent to c.HOTP(t).
-func (c Config) TOTP() string {
-    return c.HOTP(c.timeStepWindow())
+func (f *OtpFob) TOTPWithWindow(w int) ([]string, error) {
+    counter := time.Now().Unix()
+    return f.TOTPWithTimeAndWindow(uint64(counter), w)
 }
 
-var SteamAlphabet = "23456789BCDFGHJKMNPQRTVWXY"
-var SteamDigits = 5
-
-func SteamTOTP(key string) (string, error) {
-    std, err := Config{}.WithKey(key)
-    if err != nil {
-        return "", err
+func (f *OtpFob) TOTPWithTimeAndWindow(t uint64, w int) ([]string, error) {
+    _ret := make([]string, 0)
+    counter := t
+    counter /= uint64(f.Period)
+    for i := -w; i <= w; i++ {
+        c0 := int64(counter) + int64(i)
+        passcode, err := f.GenerateCode(uint64(c0))
+        if err != nil {
+            return nil, err
+        }
+        _ret = append(_ret, passcode)
     }
-    std.Digits = SteamDigits
-    std.Format = FormatAlphabet(SteamAlphabet)
-    return std.TOTP(), nil
-}
-
-func SteamVerifyCode(key string) (string, error) {
-    std, err := Config{}.WithKey(key)
-    if err != nil {
-        return "", err
-    }
-    std.Digits = 8
-    std.Format = func(hash []byte, nb int) string {
-        return base64.StdEncoding.EncodeToString(hash)[:nb]
-    }
-    return std.TOTP(), nil
+    return _ret, nil
 }

@@ -1,28 +1,75 @@
 package xotp
 
-// DefaultHOTP generates an HTOP for the specified counter using the default
-// settings (compatible with Google Authenticator) based on the given key.
-// An error is reported if the key is invalid.
-func DefaultHOTP(key string, counter uint64) (string, error) {
-    std, err := Config{}.WithKey(key)
+import (
+    "crypto/hmac"
+    "crypto/md5"
+    "crypto/sha1"
+    "crypto/sha256"
+    "crypto/sha512"
+    "encoding/binary"
+    "hash"
+)
+
+func (f OtpFob) MakeAlgorithm() func() hash.Hash {
+    switch f.Algorithm {
+    case "SHA1":
+        return sha1.New
+    case "SHA256":
+        return sha256.New
+    case "SHA512":
+        return sha512.New
+    case "MD5":
+        return md5.New
+    default:
+        return sha1.New
+    }
+}
+
+func (f *OtpFob) HOTP() (string, error) {
+    passcode, err := f.GenerateCode(uint64(f.Counter))
     if err != nil {
         return "", err
     }
-    return std.HOTP(counter), nil
+    f.Counter++
+    return passcode, nil
 }
 
-// HOTP returns the HOTP code for the specified counter value.
-func (c Config) HOTP(counter uint64) string {
-    nd := c.digits()
-    code := c.format(c.hmac(counter), nd)
-    //if len(code) != nd {
-    //    panic(fmt.Sprintf("invalid code length: got %d, want %d", len(code), nd))
-    //}
-    if len(code) > nd {
-        return code[:nd]
+// GenerateCode uses a counter and secret value and options struct to
+// create a passcode.
+func (f OtpFob) GenerateCode(counter uint64) (passcode string, err error) {
+    sum, err := f.GenerateDigest(counter)
+    if err != nil {
+        return "", err
     }
-    return code
+
+    // "Dynamic truncation" in RFC 4226
+    // http://tools.ietf.org/html/rfc4226#section-5.4
+    offset := sum[len(sum)-1] & 0xf
+    value := int64(((int(sum[offset]) & 0x7f) << 24) |
+        ((int(sum[offset+1] & 0xff)) << 16) |
+        ((int(sum[offset+2] & 0xff)) << 8) |
+        (int(sum[offset+3]) & 0xff))
+
+    radix := int64(len(f.SymbolSet))
+    _str := make([]byte, f.Digits)
+
+    for i := 0; i < f.Digits; i++ {
+        digit := value % radix
+        value /= radix
+        c := f.SymbolSet[digit]
+        _str[(f.Digits-1)-i] = c
+    }
+
+    return string(_str), nil
 }
 
-// Next increments the counter and returns the HOTP corresponding to its new value.
-func (c *Config) Next() string { c.Counter++; return c.HOTP(c.Counter) }
+func (f OtpFob) GenerateDigest(counter uint64) (digest []byte, err error) {
+    buf := make([]byte, 8)
+    mac := hmac.New(f.MakeAlgorithm(), f.Key)
+    binary.BigEndian.PutUint64(buf, counter)
+
+    mac.Write(buf)
+    sum := mac.Sum(nil)
+
+    return sum, nil
+}

@@ -1,221 +1,106 @@
 package xotp
 
 import (
-    "encoding/base32"
     "errors"
     "fmt"
     "net/url"
     "strconv"
-    "strings"
+
+    "github.com/terefang/gommons/pkg/xbytes"
 )
 
-// Package otpauth handles the URL format used to specify OTP parameters.
-//
-// This package conforms to the specification at:
-// https://github.com/google/google-authenticator/wiki/Key-Uri-Format
-//
-// The general form of an OTP URL is:
-//
-//	otpauth://TYPE/LABEL?PARAMETERS
-
-const (
-    defaultAlgorithm = "SHA1"
-    defaultDigits    = 6
-    defaultPeriod    = 30
-)
-
-// A OtpUrl contains the parsed representation of an otpauth OtpUrl.
-type OtpUrl struct {
-    Type      string // normalized to lowercase, e.g., "totp"
-    Issuer    string // also called "provider" in some docs
-    Account   string // without provider prefix
-    RawSecret string // base32-encoded, no padding
-    Algorithm string // normalized to uppercase; default is "SHA1"
-    Digits    int    // default is 6
-    Period    int    // in seconds; default is 30
-    Counter   uint64
+type OtpFob struct {
+    Type      string
+    Account   string
+    Issuer    string
+    Algorithm string
+    Secret    string
+    Key       []byte
+    Digits    int
+    SymbolSet string
+    Counter   int
+    Skew      int
+    Period    int
 }
 
-// Secret parses the contents of the RawSecret field.
-func (u *OtpUrl) Secret() ([]byte, error) { return ParseKey(u.RawSecret) }
+const DefaultAlgorithm = "SHA1"
+const DefaultPeriod = 30
+const DefaultDigits = 6
+const DefaultSymbolSet = `0123456789`
+const SteamSymbolSet = `23456789BCDFGHJKMNPQRTVWXY`
 
-var sec32 = base32.StdEncoding.WithPadding(base32.NoPadding)
+// otpauth://totp/issuer:account?algorithm=SHA256&issuer=issuer&secret=WTQWMR5ZB7EP6BHH
 
-// SetSecret encodes key as base32 and updates the RawSecret field.
-func (u *OtpUrl) SetSecret(key []byte) { u.RawSecret = sec32.EncodeToString(key) }
-
-// String converts u to a OtpUrl in the standard encoding.
-func (u *OtpUrl) String() string {
-    var sb strings.Builder
-    sb.WriteString("otpauth://")
-    typ := strings.ToLower(u.Type)
-    sb.WriteString(typ)
-    sb.WriteByte('/')
-    sb.WriteString(u.labelString())
-
-    // Encode parameters if there are any non-default values.
-    var params []string
-    if a := strings.ToUpper(u.Algorithm); a != "" && a != "SHA1" {
-        params = append(params, "algorithm="+queryEscape(a))
-    }
-    if c := u.Counter; c > 0 || typ == "hotp" {
-        params = append(params, "counter="+strconv.FormatUint(c, 10))
-    }
-    if d := u.Digits; d > 0 && d != defaultDigits {
-        params = append(params, "digits="+strconv.Itoa(d))
-    }
-    if o := u.Issuer; o != "" {
-        params = append(params, "issuer="+queryEscape(o))
-    }
-    if p := u.Period; p > 0 && p != defaultPeriod {
-        params = append(params, "period="+strconv.Itoa(p))
-    }
-    if s := u.RawSecret; s != "" {
-        enc := strings.ToUpper(strings.Join(strings.Fields(strings.TrimRight(s, "=")), ""))
-        params = append(params, "secret="+queryEscape(enc))
-    }
-    if len(params) != 0 {
-        sb.WriteByte('?')
-        sb.WriteString(strings.Join(params, "&"))
-    }
-    return sb.String()
-}
-
-// UnmarshalText implements the encoding.TextUnmarshaler interface.
-// It expects its input to be a OtpUrl in the standard encoding.
-func (u *OtpUrl) UnmarshalText(data []byte) error {
-    p, err := ParseURL(string(data))
+func FromURL(uri string) (*OtpFob, error) {
+    _uri, err := url.Parse(uri)
     if err != nil {
-        return err
+        return nil, err
     }
-    *u = *p // a shallow copy is safe, there are no pointers
-    return nil
-}
-
-// MarshalText implemens the encoding.TextMarshaler interface.
-// It emits the same OtpUrl string produced by the String method.
-func (u *OtpUrl) MarshalText() ([]byte, error) {
-    return []byte(u.String()), nil
-}
-
-func (u *OtpUrl) labelString() string {
-    label := url.PathEscape(u.Account)
-    if u.Issuer != "" {
-        return url.PathEscape(u.Issuer) + ":" + label
-    }
-    return label
-}
-
-func (u *OtpUrl) parseLabel(s string) error {
-    account, err := url.PathUnescape(s)
-    if err != nil {
-        return err
-    }
-    if i := strings.Index(account, ":"); i >= 0 {
-        u.Issuer = strings.TrimSpace(account[:i])
-        if u.Issuer == "" {
-            return errors.New("empty issuer")
-        }
-        account = account[i+1:]
-    }
-    u.Account = strings.TrimSpace(account)
-    if u.Account == "" {
-        return errors.New("empty account name")
-    }
-    return nil
-}
-
-// ParseURL parses s as a OtpUrl in the otpauth scheme.
-//
-// The input may omit a scheme, but if present the scheme must be otpauth://.
-// The parser will report an error for invalid syntax, including unknown OtpUrl
-// parameters, but does not otherwise validate the results. In particular, the
-// values of the Type and Algorithm fields are not checked.
-//
-// Fields of the OtpUrl corresponding to unset parameters are populated with
-// default values as described on the OtpUrl struct. If a different issuer is set
-// on the label and in the parameters, the parameter takes priority.
-func ParseURL(s string) (*OtpUrl, error) {
-    // A scheme is not required, but if present it must be "otpauth".
-    if ps := strings.SplitN(s, "://", 2); len(ps) == 2 {
-        if ps[0] != "otpauth" {
-            return nil, fmt.Errorf("invalid scheme %q", ps[0])
-        }
-        s = ps[1] // trim scheme prefix
+    if _uri.Scheme != "otpauth" && _uri.Scheme != "gauth" {
+        return nil, errors.New("invalid uri scheme: " + _uri.Scheme)
     }
 
-    // Extract TYPE/LABEL and optional PARAMS.
-    var typeLabel, params string
-    if ps := strings.SplitN(s, "?", 2); len(ps) == 2 {
-        typeLabel, params = ps[0], ps[1]
-    } else {
-        typeLabel = ps[0]
+    _fob := &OtpFob{}
+    _fob.Type = _uri.Host
+    _fob.Account = _uri.Path
+
+    if _uri.Query().Has("account") {
+        _fob.Account = _uri.Query().Get("account")
     }
 
-    // Require that type and label are both present and non-empty.
-    // Note that the "//" authority marker is treated as optional.
-    ps := strings.SplitN(strings.TrimPrefix(typeLabel, "//"), "/", 2) // [TYPE, LABEL]
-    if len(ps) != 2 || ps[0] == "" || ps[1] == "" {
-        return nil, errors.New("invalid type/label")
+    if _uri.Query().Has("issuer") {
+        _fob.Issuer = _uri.Query().Get("issuer")
     }
 
-    out := &OtpUrl{
-        Type:      strings.ToLower(ps[0]),
-        Algorithm: defaultAlgorithm,
-        Digits:    defaultDigits,
-        Period:    defaultPeriod,
-    }
-    if err := out.parseLabel(ps[1]); err != nil {
-        return nil, fmt.Errorf("invalid label: %v", err)
-    }
-    if params == "" {
-        return out, nil
+    _fob.Algorithm = DefaultAlgorithm
+    if _uri.Query().Has("algorithm") {
+        _fob.Algorithm = _uri.Query().Get("algorithm")
     }
 
-    // Parse URL parameters.
-    for param := range strings.SplitSeq(params, "&") {
-        ps := strings.SplitN(param, "=", 2)
-        if len(ps) == 1 {
-            ps = append(ps, "") // check value below
-        }
-        value, err := url.QueryUnescape(ps[1])
+    _fob.Digits = DefaultDigits
+    if _uri.Query().Has("digits") {
+        _fob.Digits, err = strconv.Atoi(_uri.Query().Get("digits"))
         if err != nil {
-            return nil, fmt.Errorf("invalid value: %v", err)
-        }
-
-        // Handle string-valued parameters.
-        if ps[0] == "algorithm" {
-            out.Algorithm = strings.ToUpper(value)
-            continue
-        } else if ps[0] == "issuer" {
-            out.Issuer = value
-            continue
-        } else if ps[0] == "secret" {
-            out.RawSecret = value
-            continue
-        }
-
-        // All other valid parameters require an integer argument.
-        // Defer error reporting so we report an unknown field first.
-        n, err := strconv.ParseUint(value, 10, 64)
-
-        switch ps[0] {
-        case "counter":
-            out.Counter = n
-        case "digits":
-            out.Digits = int(n)
-        case "period":
-            out.Period = int(n)
-        default:
-            return nil, fmt.Errorf("invalid parameter %q", ps[0])
-        }
-        if err != nil {
-            return nil, fmt.Errorf("invalid integer value %q", value)
+            return nil, err
         }
     }
-    return out, nil
-}
 
-func queryEscape(s string) string {
-    return strings.ReplaceAll(url.QueryEscape(s), "+", "%20")
+    _fob.Counter = 0
+    if _fob.Type == "hotp" {
+        if _uri.Query().Has("counter") {
+            _fob.Counter, err = strconv.Atoi(_uri.Query().Get("counter"))
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    _fob.Period = DefaultPeriod
+    _fob.Skew = 0
+    if _fob.Type == "totp" {
+        if _uri.Query().Has("period") {
+            _fob.Period, err = strconv.Atoi(_uri.Query().Get("period"))
+            if err != nil {
+                return nil, err
+            }
+        }
+        if _uri.Query().Has("skew") {
+            _fob.Skew, err = strconv.Atoi(_uri.Query().Get("skew"))
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    if _uri.Query().Has("secret") {
+        _fob.Secret = _uri.Query().Get("secret")
+        // url is always b32 encoded
+        _fob.Key, err = xbytes.FromBase32(_fob.Secret)
+        if err != nil {
+            return nil, err
+        }
+    }
+
+    fmt.Println(_fob)
+    return _fob, nil
 }
