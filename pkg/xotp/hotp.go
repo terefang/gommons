@@ -10,15 +10,20 @@ import (
     "hash"
 )
 
+const AlgorithmSHA1 = "SHA1"
+const AlgorithmSHA256 = "SHA256"
+const AlgorithmSHA512 = "SHA512"
+const AlgorithmMD5 = "MD5"
+
 func (f OtpFob) MakeAlgorithm() func() hash.Hash {
     switch f.Algorithm {
-    case "SHA1":
+    case AlgorithmSHA1:
         return sha1.New
-    case "SHA256":
+    case AlgorithmSHA256:
         return sha256.New
-    case "SHA512":
+    case AlgorithmSHA512:
         return sha512.New
-    case "MD5":
+    case AlgorithmMD5:
         return md5.New
     default:
         return sha1.New
@@ -36,7 +41,10 @@ func (f *OtpFob) HOTP() (string, error) {
 
 // GenerateCode uses a counter and secret value and options struct to
 // create a passcode.
-func (f OtpFob) GenerateCode(counter uint64) (passcode string, err error) {
+func (f *OtpFob) GenerateCode(counter uint64) (passcode string, err error) {
+    if f.SymbolSet == "" {
+        f.SymbolSet = DefaultSymbolSet
+    }
     sum, err := f.GenerateDigest(counter)
     if err != nil {
         return "", err
