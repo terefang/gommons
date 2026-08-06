@@ -51,7 +51,7 @@ func (r *CalcOathCommand) Execute(args []string) int {
         _code, _ := _otp.TOTP()
         fmt.Println(_code)
     } else {
-        _codes, _ := _otp.TOTPWithWindow(3)
+        _codes, _ := _otp.TOTPWithWindow(r.window)
         for _, code := range _codes {
             fmt.Println(code)
         }

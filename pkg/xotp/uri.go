@@ -138,6 +138,10 @@ func (f OtpFob) ToURL() string {
     return _sb.String()
 }
 
+func (f OtpFob) ToSimple() string {
+    return fmt.Sprintf("{TOTP}%s", string(xbytes.ToBase32(f.Key)))
+}
+
 func FromHex(_b16 string, _digits int, _algo string) (*OtpFob, error) {
     _str, _ := xbytes.FromHex(_b16)
     return From(_str, _digits, _algo)

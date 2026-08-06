@@ -34,5 +34,5 @@ func FromBase32(s string) ([]byte, error) {
 }
 
 func ToBase32(b []byte) []byte {
-    return []byte(base32.StdEncoding.EncodeToString(b))
+    return []byte(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b))
 }

@@ -10,7 +10,6 @@ require (
 	github.com/gdamore/tcell/v2 v2.13.10
 	github.com/go-crypt/crypt v0.14.15
 	github.com/go-sql-driver/mysql v1.10.0
-	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/klauspost/compress v1.19.0
@@ -18,6 +17,7 @@ require (
 	github.com/nikolalohinski/gonja/v2 v2.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/rivo/tview v0.42.0
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/cast v1.10.0
 	go.step.sm/crypto v0.85.0
 	modernc.org/sqlite v1.54.0
