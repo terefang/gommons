@@ -142,6 +142,23 @@ func (f OtpFob) ToSimple() string {
     return fmt.Sprintf("{TOTP}%s", string(xbytes.ToBase32(f.Key)))
 }
 
+func FromMCF(_mcf string) (*OtpFob, error) {
+    if strings.HasPrefix(_mcf, "otpauth://") {
+        return FromURL(_mcf)
+    }
+    if strings.HasPrefix(_mcf, "{OATH}") {
+        _b64 := xbytes.FromBase64([]byte(_mcf[6:]))
+        return FromURL(string(_b64))
+    }
+    if strings.HasPrefix(_mcf, "{TOTP}") {
+        return FromB32(_mcf[6:], DefaultDigits, DefaultAlgorithm)
+    }
+    if strings.HasPrefix(_mcf, "$TOTP$") {
+        return FromHex(_mcf[6:], DefaultDigits, DefaultAlgorithm)
+    }
+    return nil, errors.New("invalid MCF: " + _mcf)
+}
+
 func FromHex(_b16 string, _digits int, _algo string) (*OtpFob, error) {
     _str, _ := xbytes.FromHex(_b16)
     return From(_str, _digits, _algo)
