@@ -19,6 +19,7 @@ require (
 	github.com/rivo/tview v0.42.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/cast v1.10.0
+	github.com/tredoe/crypt v1.0.3
 	go.step.sm/crypto v0.85.0
 	modernc.org/sqlite v1.54.0
 )
