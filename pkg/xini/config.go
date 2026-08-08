@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -430,6 +432,11 @@ func (ic *IniConfig) stripQuotes(value string) string {
 	}
 
 	return value
+}
+
+func (ic *IniConfig) Sections() []string {
+	_M := maps.Keys(ic.sections)
+	return slices.Sorted(_M)
 }
 
 func (ic *IniConfig) findSection(sectionName string) map[string]*nilableString {
