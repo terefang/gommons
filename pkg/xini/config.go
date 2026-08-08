@@ -9,6 +9,22 @@ import (
 	"strings"
 )
 
+func New() *IniConfig {
+	ic := new(IniConfig)
+	ic.options = DefaultIniOptions()
+	ic.sections = make(sectionPropertyMap)
+
+	return ic
+}
+
+func NewWithOptions(options *IniOptions) *IniConfig {
+	ic := new(IniConfig)
+	ic.options = options
+	ic.sections = make(sectionPropertyMap)
+
+	return ic
+}
+
 // NewIniConfig loads the INI file at path into a new IniConfig.
 //
 // NewIniConfig uses the options returned by DefaultIniOptions.
@@ -62,15 +78,9 @@ func NewIniConfigFromFileWithOptions(file *os.File, options *IniOptions) (*IniCo
 		return nil, errors.New("Nil IniOptions provided")
 	}
 
-	if len(strings.TrimSpace(options.CommentStart)) == 0 {
-		return nil, errors.New("CommentStart field in IniOptions cannot be empty")
-	}
+	ic := NewWithOptions(options)
 
-	ic := new(IniConfig)
-	ic.options = options
-	ic.sections = make(sectionPropertyMap)
-
-	if err := ic.parse(file); err != nil {
+	if err := ic.ParseFromFile(file); err != nil {
 		return nil, err
 	}
 
@@ -83,14 +93,14 @@ const GLOBAL_SECTION = ""
 //
 // Default values are:
 //
-//	CommentStart 					";"
+//	CommentStart 					[]rune{';', '#', '*', '!'}
 //	StrictBoolTrue					"TRUE"
 //	StrictBoolFalse					"FALSE"
 //	EnclosingQuoteSymbols			[]rune{'\'','"'}
 func DefaultIniOptions() *IniOptions {
 	io := new(IniOptions)
 
-	io.CommentStart = ";"
+	io.CommentStart = []rune{';', '#', '*', '!'}
 	io.StrictBoolTrue = "TRUE"
 	io.StrictBoolFalse = "FALSE"
 	io.EnclosingQuoteSymbols = []rune{'\'', '"', '`'}
@@ -106,9 +116,9 @@ func DefaultIniOptions() *IniOptions {
 // lines, boolean conversion, quoting, and property assignment syntax.
 type IniOptions struct {
 
-	// CommentStart specifies the string that, when found at the start of a
+	// CommentStart specifies the rune(s) that, when found at the start of a
 	// line, identifies the line as a comment.
-	CommentStart string
+	CommentStart []rune
 
 	// StrictBoolTrue specifies the value that represents true when
 	// UseGoBoolRules is false.
@@ -438,9 +448,14 @@ func errorf(template string, args ...interface{}) error {
 	return errors.New(m)
 }
 
-// parse scans the supplied file line by line according to the rules defined in the IniOptions
-func (ic *IniConfig) parse(cf *os.File) error {
+func (ic *IniConfig) ParseFromFile(cf *os.File) error {
 	s := bufio.NewScanner(cf)
+	return ic.Parse(s)
+}
+
+// Parse scans the supplied scanner line by line according to the rules defined in the IniOptions
+func (ic *IniConfig) Parse(s *bufio.Scanner) error {
+
 	section := GLOBAL_SECTION
 
 	lineNumber := 0
@@ -454,6 +469,12 @@ func (ic *IniConfig) parse(cf *os.File) error {
 
 		if lineLength == 0 {
 			continue
+		}
+
+		for _, c := range ic.options.CommentStart {
+			if rune(l[0]) == c {
+				continue
+			}
 		}
 
 		// read line continuation
