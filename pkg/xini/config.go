@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -467,6 +468,12 @@ func (ic *IniConfig) ParseFromFile(cf *os.File) error {
 	return ic.Parse(s)
 }
 
+func (ic *IniConfig) ParseFromString(cnf string) error {
+	_rd := strings.NewReader(cnf)
+	s := bufio.NewScanner(_rd)
+	return ic.Parse(s)
+}
+
 // Parse scans the supplied scanner line by line according to the rules defined in the IniOptions
 func (ic *IniConfig) Parse(s *bufio.Scanner) error {
 
@@ -522,5 +529,54 @@ func (ic *IniConfig) Parse(s *bufio.Scanner) error {
 		}
 	}
 
+	return nil
+}
+
+func (ic *IniConfig) Unmarshal(sectionName string, holder interface{}) error {
+	sectionName = ic.normalise(sectionName)
+	_type := reflect.TypeOf(holder)
+
+	if _type.Kind() != reflect.Ptr {
+		return fmt.Errorf("argument must be a pointer, not %s", _type.Kind())
+	}
+
+	_type = _type.Elem()
+
+	if _type.Kind() != reflect.Struct {
+		return fmt.Errorf("argument must be a struct, not %s", _type.Kind())
+	}
+
+	_value := reflect.ValueOf(holder).Elem()
+
+	for i := 0; i < _type.NumField(); i++ {
+		_f := _type.Field(i)
+
+		_vmap, ok := _f.Tag.Lookup("ini")
+		if !ok {
+			_vmap = _f.Name
+		}
+
+		_vmaps := strings.Split(_vmap, ",")
+		_vf := _value.Field(i)
+		for _, _vm := range _vmaps {
+			if ic.PropertyExists(sectionName, _vm) {
+				switch _vf.Kind() {
+				case reflect.Bool:
+					_vf.SetBool(ic.AsBoolOrZero(sectionName, _vm))
+				case reflect.Float32, reflect.Float64:
+					_vf.SetFloat(ic.AsFloat64OrZero(sectionName, _vm))
+				case reflect.Int, reflect.Int64:
+					_vf.SetInt(ic.AsInt64OrZero(sectionName, _vm))
+				case reflect.Uint, reflect.Uint64:
+					_vf.SetUint(ic.AsUint64OrZero(sectionName, _vm))
+				case reflect.String:
+					_vf.SetString(ic.OrZero(sectionName, _vm))
+				default: // IGNORE
+					return fmt.Errorf("unknown type: %s on field '%s'", _vf.Kind(), _f.Name)
+				}
+				break
+			}
+		}
+	}
 	return nil
 }

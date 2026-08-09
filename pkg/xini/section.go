@@ -105,3 +105,7 @@ func (is *IniSection) AsBoolOrZero(propertyName string) bool {
 func (is *IniSection) Add(propertyName string, value string) {
 	is.ic.Add(is.name, propertyName, value)
 }
+
+func (is *IniSection) Unmarshal(holder interface{}) error {
+	return is.ic.Unmarshal(is.name, holder)
+}
