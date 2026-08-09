@@ -61,6 +61,7 @@ type parseFromStringStruct struct {
 	F uint `ini:"fv"`
 	G float32
 	H float64 `ini:"hv"`
+	I []int
 }
 
 func TestIniConfig_ParseFromString(t *testing.T) {
@@ -74,6 +75,7 @@ e = 5
 fv = 6
 g = 7.5
 hv = 8.5
+i = 1,2,3,4,5
 `)
 	if err != nil {
 		t.Error(err)
@@ -110,4 +112,5 @@ hv = 8.5
 	if _s.H != 8.5 {
 		t.Errorf("%v != %v", _s.H, 8.5)
 	}
+	//t.Errorf("%v", _s.I)
 }

@@ -18,7 +18,7 @@ import (
 // ReadFromHtpasswd loads user credentials and roles from an htpasswd-style file.
 //
 // - Each non-empty, non-comment line must have the form "username:password".
-// - Lines beginning with '/', '#', ';', ':', '%', '!', or '$' are treated as comments and ignored.
+// - Lines beginning with '/', '#', ';', ':', '%', '!', '-', or '$' are treated as comments and ignored.
 // - Reading stops when a line containing only "END" is encountered.
 // - Entries whose username begins with '*' are ignored unless isAllowAnyUser is true.
 // - Existing entries for the same username are overwritten by later entries in the file.
@@ -60,6 +60,9 @@ func ReadFromHtpasswd(f string, isAllowAnyUser bool) (map[string]string, map[str
 				continue
 			}
 			if _sline[0] == '$' {
+				continue
+			}
+			if _sline[0] == '-' {
 				continue
 			}
 			// default any user
