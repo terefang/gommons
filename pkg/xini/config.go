@@ -436,7 +436,14 @@ func (ic *IniConfig) stripQuotes(value string) string {
 
 func (ic *IniConfig) Sections() []string {
 	_M := maps.Keys(ic.sections)
-	return slices.Sorted(_M)
+	return slices.Collect(_M)
+}
+
+func (ic *IniConfig) Keys(sectionName string) []string {
+	sectionName = ic.normalise(sectionName)
+	section := ic.sections[sectionName]
+	_M := maps.Keys(section)
+	return slices.Collect(_M)
 }
 
 func (ic *IniConfig) findSection(sectionName string) map[string]*nilableString {
