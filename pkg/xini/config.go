@@ -580,81 +580,81 @@ func (ic *IniConfig) Unmarshal(sectionName string, holder interface{}) error {
 					case "[]int":
 						_sv := make([]int, _sl)
 						for j := 0; j < _sl; j++ {
-							_sv[j], _ = strconv.Atoi(_slice[j])
+							_sv[j], _ = strconv.Atoi(strings.TrimSpace(_slice[j]))
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]int8":
 						_sv := make([]int8, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseInt(_slice[j], 10, 8)
+							_v, _ := strconv.ParseInt(strings.TrimSpace(_slice[j]), 10, 8)
 							_sv[j] = int8(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]int16":
 						_sv := make([]int16, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseInt(_slice[j], 10, 16)
+							_v, _ := strconv.ParseInt(strings.TrimSpace(_slice[j]), 10, 16)
 							_sv[j] = int16(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]int32":
 						_sv := make([]int32, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseInt(_slice[j], 10, 32)
+							_v, _ := strconv.ParseInt(strings.TrimSpace(_slice[j]), 10, 32)
 							_sv[j] = int32(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]int64":
 						_sv := make([]int64, _sl)
 						for j := 0; j < _sl; j++ {
-							_sv[j], _ = strconv.ParseInt(_slice[j], 10, 64)
+							_sv[j], _ = strconv.ParseInt(strings.TrimSpace(_slice[j]), 10, 64)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]uint":
 						_sv := make([]uint, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseUint(_slice[j], 10, 32)
+							_v, _ := strconv.ParseUint(strings.TrimSpace(_slice[j]), 10, 32)
 							_sv[j] = uint(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]uint8":
 						_sv := make([]uint8, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseUint(_slice[j], 10, 8)
+							_v, _ := strconv.ParseUint(strings.TrimSpace(_slice[j]), 10, 8)
 							_sv[j] = uint8(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]uint16":
 						_sv := make([]uint16, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseUint(_slice[j], 10, 16)
+							_v, _ := strconv.ParseUint(strings.TrimSpace(_slice[j]), 10, 16)
 							_sv[j] = uint16(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]uint32":
 						_sv := make([]uint32, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseUint(_slice[j], 10, 32)
+							_v, _ := strconv.ParseUint(strings.TrimSpace(_slice[j]), 10, 32)
 							_sv[j] = uint32(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]uint64":
 						_sv := make([]uint64, _sl)
 						for j := 0; j < _sl; j++ {
-							_sv[j], _ = strconv.ParseUint(_slice[j], 10, 64)
+							_sv[j], _ = strconv.ParseUint(strings.TrimSpace(_slice[j]), 10, 64)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]float32":
 						_sv := make([]float32, _sl)
 						for j := 0; j < _sl; j++ {
-							_v, _ := strconv.ParseFloat(_slice[j], 32)
+							_v, _ := strconv.ParseFloat(strings.TrimSpace(_slice[j]), 32)
 							_sv[j] = float32(_v)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					case "[]float64":
 						_sv := make([]float64, _sl)
 						for j := 0; j < _sl; j++ {
-							_sv[j], _ = strconv.ParseFloat(_slice[j], 64)
+							_sv[j], _ = strconv.ParseFloat(strings.TrimSpace(_slice[j]), 64)
 						}
 						_vf.Set(reflect.ValueOf(_sv))
 					}

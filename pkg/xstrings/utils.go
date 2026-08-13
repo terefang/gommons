@@ -2,7 +2,6 @@ package xstrings
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/terefang/gommons/pkg/util"
@@ -71,22 +70,6 @@ func ToTrimmedLines(d []byte) []string {
 	return lines[:i]
 }
 
-// TrimExt removes extension from s
-func TrimExt(s string) string {
-	idx := strings.LastIndex(s, ".")
-	if idx == -1 {
-		return s
-	}
-	return s[:idx]
-}
-
-// ExtEqualFold returns true if s ends with extension (e.g. ".html")
-// case-insensitive
-func ExtEqualFold(s string, ext string) bool {
-	e := filepath.Ext(s)
-	return strings.EqualFold(e, ext)
-}
-
 func AppendNewline(s *string) string {
 	if strings.HasSuffix(*s, "\n") {
 		return *s
@@ -137,15 +120,6 @@ func AppendOrReplaceInFileMust(path string, toAppend string, delim string) bool 
 	err = os.WriteFile(path, []byte(newContent), perm)
 	util.Must(err)
 	return true
-}
-
-func ExpandTildeInPath(s string) string {
-	if strings.HasPrefix(s, "~") {
-		dir, err := os.UserHomeDir()
-		util.Must(err)
-		return dir + s[1:]
-	}
-	return s
 }
 
 func ParseEnvMust(d []byte) map[string]string {

@@ -81,6 +81,8 @@ func ReadFromHtpasswd(f string, isAllowAnyUser bool) (map[string]string, map[str
 func ValidateCryptedCredential(_given string, _encrypted string) (bool, error) {
 	if strings.HasPrefix(_encrypted, "{plain}") {
 		return _given == _encrypted[7:], nil
+	} else if strings.HasPrefix(_encrypted, "{type7}") {
+		return ValidateType7Credential(_given, _encrypted)
 	} else if _fob, err := xotp.FromMCF(_encrypted); err == nil {
 		_codes, err := _fob.TOTPWithWindow(1)
 		if err == nil {
