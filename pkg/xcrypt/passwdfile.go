@@ -71,7 +71,7 @@ func ReadFromHtpasswd(f string, isAllowAnyUser bool) (map[string]string, map[str
 				continue
 			}
 			_upr := strings.SplitN(_sline, ":", 3)
-			if len(_upr) == 2 {
+			if len(_upr) >= 2 {
 				creds[_upr[0]] = _upr[1]
 				if len(_upr) == 3 {
 					roles[_upr[0]] = _upr[2]
