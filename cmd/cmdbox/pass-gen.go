@@ -34,28 +34,29 @@ type passwordCommand struct {
 	digits bool
 
 	// Confusing characters?
-	collide  bool
-	doSha1   bool
-	doMd5    bool
-	doSha256 bool
-	doSha512 bool
-	doScrypt bool
-	doBcrypt bool
-	doArgon2 bool
-	doPbkdf2 bool
-	doCMd5   bool
-	doAll    bool
-	doApr1   bool
-	doSsha   bool
-	password string
-	doPrompt bool
-	listSets bool
-	useSet   string
-	useSalt  string
-	doCisco8 bool
-	doCisco9 bool
-	doKdf    bool
-	doType7  bool
+	collide    bool
+	doSha1     bool
+	doMd5      bool
+	doSha256   bool
+	doSha512   bool
+	doScrypt   bool
+	doBcrypt   bool
+	doArgon2   bool
+	doPbkdf2   bool
+	doCMd5     bool
+	doAll      bool
+	doApr1     bool
+	doSsha     bool
+	password   string
+	doPrompt   bool
+	listSets   bool
+	useSet     string
+	useSalt    string
+	doCisco8   bool
+	doCisco9   bool
+	doKdf      bool
+	doType7    bool
+	doWordPass bool
 }
 
 // Arguments adds per-command args to the object.
@@ -81,6 +82,7 @@ func (p *passwordCommand) Arguments(f *flag.FlagSet) {
 	f.BoolVar(&p.doArgon2, "argon2", false, "show argon2 passwd/xcrypt hash")
 	f.BoolVar(&p.doPbkdf2, "pbkdf2", false, "show pbkdf2 passwd/xcrypt hash")
 	f.BoolVar(&p.doAll, "all", false, "show all hashes")
+	f.BoolVar(&p.doWordPass, "wordpass", false, "use WordPass algorithm")
 	f.StringVar(&p.useSalt, "salt", "", "use given passwd/xcrypt salt")
 	f.StringVar(&p.useSet, "set", "", "use predefined symbol set")
 	f.StringVar(&p.password, "password", "", "dont generate password but use the one given")
@@ -138,7 +140,11 @@ func (p *passwordCommand) Execute(args []string) int {
 	}
 
 	if !p.doPrompt && (p.password == "") {
-		p.password = xcrypt.GeneratePasswordWithSym(symbolset, p.length)
+		if p.doWordPass {
+			p.password = xcrypt.GenerateWordPass(p.length)
+		} else {
+			p.password = xcrypt.GeneratePasswordWithSym(symbolset, p.length)
+		}
 		fmt.Printf("%s\n", p.password)
 	}
 
@@ -172,7 +178,7 @@ func (p *passwordCommand) Execute(args []string) int {
 	}
 	if p.doAll || p.doType7 {
 		_dgst := xcrypt.Type7_encrypt(string(buf))
-		fmt.Printf("Type7: %s\n", _dgst)
+		fmt.Printf("Type7: {type7}%s\n", _dgst)
 	}
 	if p.doAll || p.doCisco8 {
 		_dgst := xcrypt.GenerateCisco8CryptWithSalt(string(buf), p.useSalt)
