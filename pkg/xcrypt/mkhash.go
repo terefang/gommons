@@ -2,7 +2,6 @@ package xcrypt
 
 import (
 	"github.com/go-crypt/crypt/algorithm/argon2"
-	"github.com/go-crypt/crypt/algorithm/bcrypt"
 	"github.com/go-crypt/crypt/algorithm/md5crypt"
 	"github.com/go-crypt/crypt/algorithm/pbkdf2"
 	"github.com/go-crypt/crypt/algorithm/scrypt"
@@ -99,30 +98,6 @@ func GenerateScrypt(given string) string {
 
 func GenerateScryptWithSalt(given, salt string) string {
 	_cry, _ := scrypt.New()
-	_dgst, _ := _cry.HashWithSalt(given, []byte(salt))
-	return _dgst.String()
-}
-
-func GenerateBcrypt(given string) string {
-	_cry, _ := bcrypt.New(bcrypt.WithCost(14))
-	_dgst, _ := _cry.Hash(given)
-	return _dgst.String()
-}
-
-func GenerateBcryptWithSalt(given, salt string) string {
-	_cry, _ := bcrypt.New(bcrypt.WithCost(14))
-	_dgst, _ := _cry.HashWithSalt(given, []byte(salt))
-	return _dgst.String()
-}
-
-func GenerateBcryptSha256(given string) string {
-	_cry, _ := bcrypt.NewSHA256(bcrypt.WithCost(14))
-	_dgst, _ := _cry.Hash(given)
-	return _dgst.String()
-}
-
-func GenerateBcryptSha256WithSalt(given, salt string) string {
-	_cry, _ := bcrypt.NewSHA256(bcrypt.WithCost(14))
 	_dgst, _ := _cry.HashWithSalt(given, []byte(salt))
 	return _dgst.String()
 }

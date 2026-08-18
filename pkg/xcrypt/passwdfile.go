@@ -74,7 +74,7 @@ func ReadFromHtpasswd(f string, isAllowAnyUser bool) (map[string]string, map[str
 			if len(_upr) >= 2 {
 				creds[_upr[0]] = _upr[1]
 				if len(_upr) == 3 {
-					roles[_upr[0]] = _upr[2]
+					roles[_upr[0]] = strings.ReplaceAll(_upr[2], ",", " ")
 				}
 			} else {
 				log.Println("htpasswd: invalid line:", _sline)
@@ -90,6 +90,8 @@ func ValidateCryptedCredential(_given string, _encrypted string) (bool, error) {
 		return _given == _encrypted[7:], nil
 	} else if strings.HasPrefix(_encrypted, "{type7}") {
 		return ValidateType7Credential(_given, _encrypted)
+	} else if strings.HasPrefix(_encrypted, "$2z$") {
+		return VerifyBcrypt2Z(_given, _encrypted)
 	} else if _fob, err := xotp.FromMCF(_encrypted); err == nil {
 		_codes, err := _fob.TOTPWithWindow(1)
 		if err == nil {

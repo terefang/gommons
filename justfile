@@ -9,6 +9,16 @@ OSARCH := os()+"-"+arch()
 ## GOARCHS := "linux,amd64 linux,arm64 windows,amd64 windows,arm64 darwin,amd64 darwin,arm64"
 GOARCHS := "linux,amd64 linux,arm64 darwin,amd64 darwin,arm64"
 
+add-mod _MOD:
+    #!/bin/sh -x
+    go get {{_MOD}}
+    go mod vendor
+
+update-mod:
+    #!/bin/sh -x
+    go mod tidy
+    go mod vendor
+
 update-version-info:
     #!/bin/sh
     V=$(shtool version -n "{{EXE}}" -d long -l txt ./version.txt)
