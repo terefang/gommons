@@ -114,9 +114,18 @@ func ConvertAttributeFromKey[V FilterAttrMap](key string, kv V) ([]string, bool)
 	switch _kv := _kvi.(type) {
 	case nil:
 		return nil, false
+	case map[string][]string:
+		_values, _ok = _kv[key]
+		return _values, _ok
 	case FilterAttrMapValues:
 		_values, _ok = _kv[key]
 		return _values, _ok
+	case map[string]string:
+		_v, _ok := _kv[key]
+		if !_ok {
+			return nil, _ok
+		}
+		return []string{_v}, _ok
 	case FilterAttrMapValue:
 		_v, _ok := _kv[key]
 		if !_ok {

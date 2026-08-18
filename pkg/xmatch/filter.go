@@ -104,9 +104,9 @@ type FilterAttrMapValue map[string]string
 type FilterAttrMapValues map[string][]string
 
 type FilterAttrMap interface {
-	FilterAttrMapValue | FilterAttrMapValues | FilterAttrMapFuncValue | FilterAttrMapFuncValues
+	map[string]string | map[string][]string | FilterAttrMapValue | FilterAttrMapValues | FilterAttrMapFuncValue | FilterAttrMapFuncValues
 }
 
 type FilterAttrMapSimple interface {
-	FilterAttrMapValue | FilterAttrMapValues
+	map[string]string | map[string][]string | FilterAttrMapValue | FilterAttrMapValues
 }
