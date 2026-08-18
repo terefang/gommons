@@ -13,7 +13,11 @@ func ConvertAttrSimpleToKeys[V FilterAttrMapSimple](kv V) ([]string, bool) {
 	switch _kv := _kvi.(type) {
 	case nil:
 		return nil, false
+	case map[string][]string:
+		return slices.Collect(maps.Keys(_kv)), true
 	case FilterAttrMapValues:
+		return slices.Collect(maps.Keys(_kv)), true
+	case map[string]string:
 		return slices.Collect(maps.Keys(_kv)), true
 	case FilterAttrMapValue:
 		return slices.Collect(maps.Keys(_kv)), true
