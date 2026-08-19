@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/terefang/gommons/pkg/xfile"
+	"github.com/terefang/gommons/pkg/xstrings"
 )
 
 // ReadFromHtgroup loads user groups/roles from an htgroup-style file.
@@ -62,7 +63,7 @@ func ReadFromHtgroup(f string) (map[string][]string, error) {
 			}
 			_gu := strings.SplitN(_sline, ":", 3)
 			if len(_gu) >= 2 {
-				groups[strings.ToLower(_gu[0])] = strings.Fields(strings.ReplaceAll(strings.ToLower(_gu[1]), ",", " "))
+				groups[strings.ToLower(_gu[0])] = xstrings.SplitByDefaultSet(strings.ToLower(_gu[1]))
 			} else {
 				log.Println("htgroup: invalid line:", _sline)
 			}

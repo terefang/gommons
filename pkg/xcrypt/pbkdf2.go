@@ -1,7 +1,8 @@
-package pbkdf2
+package xcrypt
 
 import (
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha512"
 	"encoding/binary"
 	"hash"
@@ -56,6 +57,20 @@ func GenerateKey(password, salt []byte, iterCount, keyLen int, h func() hash.Has
 	return dk[0:keyLen]
 }
 
-func GenerateKeySecure(password, salt []byte, iterCount, keyLen int) []byte {
-	return GenerateKey(password, salt, iterCount, keyLen, sha512.New)
+var NullSalt = make([]byte, 0)
+
+func GenerateKeySecure(password []byte, keyLen int) []byte {
+	return GenerateKey(password, NullSalt, 1024, keyLen, sha512.New)
+}
+
+func GenerateKeySecureWithSalt(password, salt []byte, keyLen int) []byte {
+	return GenerateKey(password, salt, 1024, keyLen, sha512.New)
+}
+
+func GenerateKeySimple(password []byte, keyLen int) []byte {
+	return GenerateKey(password, NullSalt, 16, keyLen, sha1.New)
+}
+
+func GenerateKeySimpleWithSalt(password, salt []byte, keyLen int) []byte {
+	return GenerateKey(password, salt, 16, keyLen, sha1.New)
 }

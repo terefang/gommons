@@ -59,3 +59,26 @@ func SplitWsWithQuotes(cmd string, qc rune) []string {
 	}
 	return fields
 }
+
+func SplitBySet(cmd string, set string) []string {
+	return strings.FieldsFunc(cmd, func(r rune) bool {
+		for _, _r := range []rune(set) {
+			if r == _r {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+func SplitByDefaultSet(cmd string) []string {
+	return SplitBySet(cmd, CommonFieldSeparators)
+}
+
+func SplitPart(cmd string, sep string) (string, string) {
+	_parts := strings.SplitN(cmd, sep, 2)
+	if len(_parts) == 1 {
+		return _parts[0], ""
+	}
+	return _parts[0], _parts[1]
+}
