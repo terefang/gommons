@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Cut truncates a string to the specified maximum length and appends "..." if truncated.
@@ -34,11 +35,6 @@ func IsSpace(s string) bool {
 // Returns true if the string contains non-space characters.
 func HasLen(s string) bool {
 	return RemSpace(s) != ""
-}
-
-// IsEmpty checks if the string is empty or contains only whitespace.
-func IsEmpty(str string) bool {
-	return strings.TrimSpace(str) == ""
 }
 
 // BlurEmail blurs the local part of an email address while keeping the domain visible.
@@ -204,6 +200,44 @@ func IsNumeric(s string) bool {
 	}
 	for _, r := range s {
 		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// IsEmpty checks if the string is empty.
+func IsEmpty(str string) bool {
+	strLen := len(str)
+	if str == "" || strLen == 0 {
+		return true
+	}
+	return false
+}
+
+/*
+IsBlank checks if a string is whitespace or empty (""). Observe the following behavior:
+
+	goutils.IsBlank("")        = true
+	goutils.IsBlank(" ")       = true
+	goutils.IsBlank("bob")     = false
+	goutils.IsBlank("  bob  ") = false
+
+Parameter:
+
+	str - the string to check
+
+Returns:
+
+	true - if the string is whitespace or empty ("")
+*/
+func IsBlank(str string) bool {
+	strLen := len(str)
+	if str == "" || strLen == 0 {
+		return true
+	}
+	for i := 0; i < strLen; i++ {
+		if unicode.IsSpace(rune(str[i])) == false {
 			return false
 		}
 	}

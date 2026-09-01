@@ -9,13 +9,20 @@ OSARCH := os()+"-"+arch()
 ## GOARCHS := "linux,amd64 linux,arm64 windows,amd64 windows,arm64 darwin,amd64 darwin,arm64"
 GOARCHS := "linux,amd64 linux,arm64 darwin,amd64 darwin,arm64"
 
+# GOROOT := "/u/fredo/bin/go/go1.26.7"
+GOROOT := "/u/fredo/bin/go/go1.27.0"
+
 add-mod _MOD:
     #!/bin/sh -x
+    export GOROOT={{GOROOT}}
+    export PATH=$GOROOT/bin:$PATH
     go get {{_MOD}}
     go mod vendor
 
 update-mod:
     #!/bin/sh -x
+    export GOROOT={{GOROOT}}
+    export PATH=$GOROOT/bin:$PATH
     go mod tidy
     go mod vendor
 
@@ -126,7 +133,7 @@ build-osarch _GOS _GARCH:
 
 build-osarch-out _GOS _GARCH _GOUT: update-version-info
     #!/bin/sh
-    export GOROOT=${HOME}/bin/go
+    export GOROOT={{GOROOT}}
     export PATH=$GOROOT/bin:$PATH
     mkdir -p {{XDIST}}
     #CGO_ENABLED=1 CC=musl-gcc \

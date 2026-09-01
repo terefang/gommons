@@ -191,10 +191,12 @@ const Base36Upper = Numbers + UppercaseLetters
 
 const Symbols = SimpleSymbols + Quotes + MathSymbols + Brackets + Punctuation
 const SimpleSymbols = `@#$&_|`
-const Quotes = `"'`
+const Quotes = `"'` + "`"
 const MathSymbols = `%^*+-=/`
 const Punctuation = `.,!?;:`
-const Brackets = `()[]{}<>`
+const OpenBrackets = `([{<`
+const CloseBrackets = `)]}>`
+const Brackets = OpenBrackets + CloseBrackets
 const AlphanumericSymbols = Letters + Numbers + Symbols
 
 const CommonFieldSeparators = ` ,;:/|`
