@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/terefang/gommons/pkg/util"
+	"../pkg/util"
 )
 
 // NormalizeNewlinesInPlace changes CRLF (Windows) and
@@ -126,18 +126,16 @@ func AppendOrReplaceInFileMust(path string, toAppend string, delim string) bool 
 	return true
 }
 
-/*
-DeleteWhiteSpace deletes all whitespaces from a string as defined by unicode.IsSpace(rune).
-It returns the string without whitespaces.
-
-Parameter:
-
-	str - the string to delete whitespace from, may be nil
-
-Returns:
-
-	the string without whitespaces
-*/
+// DeleteWhiteSpace deletes all whitespaces from a string as defined by unicode.IsSpace(rune).
+// It returns the string without whitespaces.
+//
+// Parameter:
+//
+//	str - the string to delete whitespace from, may be nil
+//
+// Returns:
+//
+//	the string without whitespaces
 func DeleteWhiteSpace(str string) string {
 	if str == "" {
 		return str
