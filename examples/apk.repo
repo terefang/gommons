@@ -1,0 +1,4 @@
+Index       index.json
+Repository  https://archive.openwrt.org/releases/25.12.5/packages/x86_64/packages
+Root        /pkg
+Manifests   /pkg/etc/idb

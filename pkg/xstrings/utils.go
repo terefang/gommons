@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"../pkg/util"
+	"github.com/terefang/gommons/pkg/util"
 )
 
 // NormalizeNewlinesInPlace changes CRLF (Windows) and

@@ -1,4 +1,4 @@
-package fractal
+package sampler
 
 import "github.com/terefang/gommons/pkg/xrng"
 

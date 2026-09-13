@@ -90,8 +90,12 @@ func ValidateCryptedCredential(_given string, _encrypted string) (bool, error) {
 		return _given == _encrypted[7:], nil
 	} else if strings.HasPrefix(_encrypted, "{type7}") {
 		return ValidateType7Credential(_given, _encrypted)
-	} else if strings.HasPrefix(_encrypted, "$2z$") {
-		return VerifyBcrypt2Z(_given, _encrypted)
+	} else if strings.HasPrefix(_encrypted, "$2") {
+		return VerifyBcrypt(_given, _encrypted)
+	} else if strings.HasPrefix(_encrypted, "$3$") {
+		return strings.EqualFold(GenerateNtCrypt(_given), _encrypted), nil
+	} else if strings.HasPrefix(_encrypted, "{LM}") {
+		return strings.EqualFold(GenerateLmCrypt(_given), _encrypted), nil
 	} else if _fob, err := xotp.FromMCF(_encrypted); err == nil {
 		_codes, err := _fob.TOTPWithWindow(1)
 		if err == nil {

@@ -207,10 +207,23 @@ func Execute() int {
 
 	// Failed?  Look at the binary-name
 	if subCmdName == "" {
-		subCmd, found = subcommandFlags[path.Base(os.Args[0])]
+		base := path.Base(os.Args[0])
+		subCmd, found = subcommandFlags[base]
 		if found {
 			args = 1
-			subCmdName = path.Base(os.Args[0])
+			subCmdName = base
+		}
+	}
+
+	// again failed? look if it is a suffix of the binary-name
+	if subCmdName == "" {
+		base := path.Base(os.Args[0])
+		for cmdName, _ := range subcommandFlags {
+			if strings.HasSuffix(base, "-"+cmdName) || strings.HasSuffix(base, "_"+cmdName) {
+				args = 1
+				subCmdName = cmdName
+				break
+			}
 		}
 	}
 

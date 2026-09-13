@@ -1,0 +1,4 @@
+Index       Packages.gz
+Repository  https://archive.openwrt.org/releases/24.10.0/packages/x86_64/packages
+Root        /pkg
+Manifests   /pkg/etc/idb

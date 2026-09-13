@@ -12,6 +12,6 @@ func UnitCount(f string, b int64, unit int64, suffix string) string {
 		div *= unit
 		exp++
 	}
-	return fmt.Sprintf(f+" %c%s",
+	return fmt.Sprintf(f+"%c%s",
 		float64(b)/float64(div), "KMGTPE"[exp], suffix)
 }

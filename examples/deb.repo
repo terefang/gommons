@@ -1,0 +1,4 @@
+Index       Packages.gz
+Repository  deb+https://snapshot.debian.org/archive/debian/20230322T152120Z|dists/jessie/main/binary-amd64
+Root        /pkg
+Manifests   /pkg/etc/idb

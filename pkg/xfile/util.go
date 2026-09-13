@@ -1,27 +1,4 @@
-// originally taken from https://github.com/kjk/common/ under:
-//MIT License
-//
-//Copyright (c) 2021 Krzysztof Kowalczyk
-//
-//Permission is hereby granted, free of charge, to any person obtaining a copy
-//of this software and associated documentation files (the "Software"), to deal
-//in the Software without restriction, including without limitation the rights
-//to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//copies of the Software, and to permit persons to whom the Software is
-//furnished to do so, subject to the following conditions:
-//
-//The above copyright notice and this permission notice shall be included in all
-//copies or substantial portions of the Software.
-//
-//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//SOFTWARE.
-
-package util
+package xfile
 
 import (
 	"archive/zip"
@@ -34,19 +11,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+
+	"github.com/terefang/gommons/pkg/util"
 )
-
-// PathExists returns true if path exists
-func PathExists(path string) bool {
-	_, err := os.Lstat(path)
-	return err == nil
-}
-
-// FileExists returns true if path exists and is a regular file
-func FileExists(path string) bool {
-	st, err := os.Lstat(path)
-	return err == nil && st.Mode().IsRegular()
-}
 
 // DirExists returns true if path exists and is a directory
 func DirExists(path string) bool {
@@ -95,6 +63,20 @@ func CopyFile(dst string, src string) error {
 	err2 := fout.Close()
 	if err != nil || err2 != nil {
 		os.Remove(dst)
+	}
+	return err
+}
+
+func CopyToFile(dst *os.File, src string) error {
+	fin, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer fin.Close()
+	_, err = io.Copy(dst, fin)
+	err2 := dst.Close()
+	if err != nil || err2 != nil {
+		os.Remove(dst.Name())
 	}
 	return err
 }
@@ -279,10 +261,39 @@ func MaybeSync(w io.Writer) error {
 	return nil
 }
 
-func WriteToFile(path string, content string) error {
+func WriteStringToFile(path string, content string) error {
+	return WriteToFile(path, []byte(content))
+}
+
+func WriteToFile(path string, content []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 	os.Remove(path)
-	return os.WriteFile(path, []byte(content), 0644)
+	return os.WriteFile(path, content, 0644)
+}
+
+// TrimExt removes extension from s
+func TrimExt(s string) string {
+	idx := strings.LastIndex(s, ".")
+	if idx == -1 {
+		return s
+	}
+	return s[:idx]
+}
+
+// ExtEqualFold returns true if s ends with extension (e.g. ".html")
+// case-insensitive
+func ExtEqualFold(s string, ext string) bool {
+	e := filepath.Ext(s)
+	return strings.EqualFold(e, ext)
+}
+
+func ExpandTildeInPath(s string) string {
+	if strings.HasPrefix(s, "~") {
+		dir, err := os.UserHomeDir()
+		util.Must(err)
+		return dir + s[1:]
+	}
+	return s
 }

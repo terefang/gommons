@@ -44,6 +44,7 @@ type passwordCommand struct {
 	doArgon2   bool
 	doPbkdf2   bool
 	doCMd5     bool
+	doNt       bool
 	doAll      bool
 	doApr1     bool
 	doSsha     bool
@@ -70,6 +71,7 @@ func (p *passwordCommand) Arguments(f *flag.FlagSet) {
 	f.BoolVar(&p.doSha1, "sha1", false, "show sha1 passwd/xcrypt hash")
 	f.BoolVar(&p.doSsha, "ssha", false, "show salted sha1 ldap hash")
 	f.BoolVar(&p.doMd5, "md5", false, "show md5 passwd/xcrypt hash")
+	f.BoolVar(&p.doNt, "nt", false, "show nt/md4 passwd/xcrypt hash")
 	f.BoolVar(&p.doApr1, "apr1", false, "show apr1 passwd/xcrypt hash")
 	f.BoolVar(&p.doCMd5, "cisco-md5", false, "show md5 cisco-style hash")
 	f.BoolVar(&p.doType7, "type7", false, "show cisco-style type7 hash")
@@ -187,6 +189,10 @@ func (p *passwordCommand) Execute(args []string) int {
 	if p.doAll || p.doCisco9 {
 		_dgst := xcrypt.GenerateCisco9CryptWithSalt(string(buf), p.useSalt)
 		fmt.Printf("Cisco-$9$: %s\n", _dgst)
+	}
+	if p.doAll || p.doNt {
+		_dgst := xcrypt.GenerateNtCrypt(string(buf))
+		fmt.Printf("NT: %s\n", _dgst)
 	}
 	if p.doAll || p.doMd5 {
 		_cry, _ := md5crypt.New()
