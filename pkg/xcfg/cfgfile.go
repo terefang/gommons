@@ -15,9 +15,10 @@ import (
 type CfgConfig struct {
 	Configs []*CfgConfigBlock
 
-	inBlock     bool
-	inExtString bool
-	extString   strings.Builder
+	inBlock       bool
+	inExtString   bool
+	prevContinued bool
+	extString     strings.Builder
 }
 
 // CfgConfigBlock represents a node in the configuration tree.
@@ -73,6 +74,19 @@ func ParseCfgString(_str string) (*CfgConfig, error) {
 // Handles comments, multiline string boundaries, block depth checks, and single commands.
 func (c *CfgConfig) ParseLine(_pos int, _line string) error {
 	_sline := strings.TrimSpace(_line)
+
+	if !c.inExtString && strings.HasSuffix(_sline, " \\") {
+		c.prevContinued = true
+		c.extString.WriteString(_sline[:len(_sline)-1])
+		return nil
+	}
+
+	if !c.inExtString && c.prevContinued {
+		c.prevContinued = false
+		c.extString.WriteString(_sline)
+		_sline = c.extString.String()
+		c.extString.Reset()
+	}
 
 	// Handle end of multiline extended string block
 	if c.inExtString && _sline == "```" {

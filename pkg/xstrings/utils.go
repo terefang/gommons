@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/terefang/gommons/pkg/util"
 )
@@ -294,3 +295,8 @@ func parseEnv(d []byte, p bool) (map[string]string, error) {
 	}
 	return m, nil
 }
+
+// Len is an alias of utf8.RuneCountInString which returns the number of
+// runes in s. Erroneous and short encodings are treated as single runes of
+// width 1 byte.
+var Len = utf8.RuneCountInString

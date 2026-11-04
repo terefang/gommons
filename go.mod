@@ -7,7 +7,7 @@ require (
 	github.com/andrewchambers/goline v0.0.0-20260604205043-abdd1894d6d2
 	github.com/andybalholm/brotli v1.2.2
 	github.com/anyascii/go v0.3.3
-	github.com/arnodel/golua v0.3.0
+	github.com/arnodel/golua v0.4.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/gdamore/tcell/v2 v2.13.10
@@ -26,7 +26,8 @@ require (
 	github.com/tredoe/crypt v1.0.3
 	go.step.sm/crypto v0.85.0
 	golang.org/x/crypto v0.53.0
-	golang.org/x/text v0.38.0
+	golang.org/x/image v0.46.0
+	golang.org/x/text v0.42.0
 	modernc.org/sqlite v1.54.0
 )
 
@@ -79,8 +80,8 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	modernc.org/libc v1.74.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

@@ -59,13 +59,17 @@ type PkgCommand struct {
 	installDb        string
 	useIndexJson     bool
 	usePackagesGz    bool
+	usePackagesXz    bool
 	useIndexList     bool
 	useIndex         string
 	noRepo           bool
+	doDlOnly         string
+	doDump           bool
 }
 
 func (r *PkgCommand) Arguments(f *flag.FlagSet) {
 	f.BoolVar(&r.doInstall, "i", false, "install packages")
+	f.BoolVar(&r.doDump, "dump", false, "dump package info")
 	f.BoolVar(&r.doList, "l", false, "list package info")
 	f.BoolVar(&r.doSearch, "s", true, "search for packages")
 	f.BoolVar(&r.doSearchProvides, "p", false, "search for provides packages")
@@ -75,6 +79,8 @@ func (r *PkgCommand) Arguments(f *flag.FlagSet) {
 	f.BoolVar(&r.useIndexJson, "json", false, "index.json repository")
 	f.BoolVar(&r.useIndexList, "lst", false, "index.lst repository")
 	f.BoolVar(&r.usePackagesGz, "opkg", false, "Packages.gz repository")
+	f.BoolVar(&r.usePackagesXz, "dpkg", false, "Packages.xz repository")
+	f.StringVar(&r.doDlOnly, "dlonly", "", "download only and put into directory")
 	f.StringVar(&r.useIndex, "index", "", "type repository")
 	f.StringVar(&r.repoBase, "repo", "/pkg/var/pkg/packages", "repository base")
 	f.StringVar(&r.rootDir, "root", "/pkg", "installation root directory")
@@ -135,6 +141,8 @@ type OpkgManager struct {
 	DryRun    bool
 	Installed []string
 	NoRepo    bool
+
+	DlDir string
 }
 
 func NewOpkgManager(rootDir, repoURL string) *OpkgManager {
@@ -249,14 +257,14 @@ func PrettyPrintTable(pkgs []Package) {
 }
 
 // Update fetches and parses the Packages index file from the repository
-func (m *OpkgManager) Update() error {
+func (m *OpkgManager) Update(_dump bool) error {
 	if m.IndexName == "" {
-		return m.UpdateIndex(XPKG_PKG_INDEX)
+		return m.UpdateIndex(XPKG_PKG_INDEX, false)
 	}
-	return m.UpdateIndex(m.IndexName)
+	return m.UpdateIndex(m.IndexName, _dump)
 }
 
-func (m *OpkgManager) UpdateIndex(indexName string) error {
+func (m *OpkgManager) UpdateIndex(indexName string, _dump bool) error {
 	fmt.Println("Updating package database ... ")
 	indexURL := fmt.Sprintf("%s/%s", m.RepoURL, indexName)
 	if strings.HasPrefix(m.RepoURL, "deb+") {
@@ -306,7 +314,7 @@ func (m *OpkgManager) UpdateIndex(indexName string) error {
 		return errors.New("invalid Repo URL " + m.RepoURL)
 	}
 
-	err := m.parsePackagesIndexContainer(indexName, body)
+	err := m.parsePackagesIndexContainer(indexName, body, _dump)
 	if err != nil {
 		return fmt.Errorf("error parsing %s: %v", indexName, err)
 	}
@@ -315,9 +323,15 @@ func (m *OpkgManager) UpdateIndex(indexName string) error {
 	return nil
 }
 
-func (m *OpkgManager) parsePackagesIndexContainer(indexName string, data []byte) error {
+func (m *OpkgManager) parsePackagesIndexContainer(indexName string, data []byte, _dump bool) error {
 	if strings.HasSuffix(indexName, ".gz") {
 		_data, err := xcompress.GzipDecompressData(data)
+		if err != nil {
+			return fmt.Errorf("failed to decompress %s: %w", indexName, err)
+		}
+		data = _data
+	} else if strings.HasSuffix(indexName, ".xz") {
+		_data, err := xcompress.XzDecompressData(data)
 		if err != nil {
 			return fmt.Errorf("failed to decompress %s: %w", indexName, err)
 		}
@@ -329,7 +343,7 @@ func (m *OpkgManager) parsePackagesIndexContainer(indexName string, data []byte)
 		}
 		data = _data
 	}
-	m.parsePackagesIndex(indexName, string(data))
+	m.parsePackagesIndex(indexName, string(data), _dump)
 	return nil
 }
 
@@ -398,13 +412,13 @@ func (m *OpkgManager) parsePackageEntry(block string) Package {
 	return pkg
 }
 
-func (m *OpkgManager) parsePackagesIndex(indexName string, data string) {
+func (m *OpkgManager) parsePackagesIndex(indexName string, data string, _dump bool) {
 	if strings.HasPrefix(indexName, XPKG_PKG_INDEX) {
-		m.parsePackages(data)
+		m.parsePackages(data, _dump)
 	} else if strings.HasPrefix(indexName, JPKG_PKG_INDEX) {
-		m.parseIndexJson(data)
+		m.parseIndexJson(data, _dump)
 	} else if strings.HasPrefix(indexName, ZPKG_PKG_INDEX) {
-		m.parseIndexList(data)
+		m.parseIndexList(data, _dump)
 	}
 	fmt.Println("")
 }
@@ -432,7 +446,7 @@ type PackageJsonIndex struct {
 	Packages     map[string]string `json:"packages"`
 }
 
-func (m *OpkgManager) parseIndexJson(data string) {
+func (m *OpkgManager) parseIndexJson(data string, dump bool) {
 	var index PackageJsonIndex
 	err := json.Unmarshal([]byte(data), &index)
 	if err != nil {
@@ -470,7 +484,7 @@ type PackageListIndex struct {
 	Files    map[string]string
 }
 
-func (m *OpkgManager) parseIndexList(data string) {
+func (m *OpkgManager) parseIndexList(data string, dump bool) {
 	var index PackageListIndex
 	index.Packages = make(map[string]string)
 	index.Files = make(map[string]string)
@@ -513,7 +527,7 @@ func (m *OpkgManager) parseIndexList(data string) {
 }
 
 // Simple RFC 822 / Control file parser
-func (m *OpkgManager) parsePackages(data string) {
+func (m *OpkgManager) parsePackages(data string, _dump bool) {
 	blocks := strings.Split(data, "\n\n")
 	blen := len(blocks)
 	fmt.Println("")
@@ -521,7 +535,9 @@ func (m *OpkgManager) parsePackages(data string) {
 		if strings.TrimSpace(block) == "" {
 			continue
 		}
-		renderProgressBar("Indexing", i, 100, blen, 50)
+		if !_dump {
+			renderProgressBar("Indexing", i, 100, blen, 50)
+		}
 		//fmt.Println("-----")
 
 		var pkg Package = m.parsePackageEntry(block)
@@ -535,7 +551,13 @@ func (m *OpkgManager) parsePackages(data string) {
 			} else {
 				m.Provides[pkg.Name] = append(m.Provides[pkg.Name], pName)
 			}
+			if _dump {
+				fmt.Println(pkg.Name, pkg.Version, pkg.Section, pkg.Filename)
+			}
 		}
+	}
+	if _dump {
+		os.Exit(0)
 	}
 }
 
@@ -646,6 +668,19 @@ func (m *OpkgManager) Install(pkgName string, asDep bool) error {
 
 func (m *OpkgManager) InstallPkg(pkg Package) error {
 	tName := filepath.Base(pkg.Filename)
+	if m.DlDir != "" {
+		tmpIPK, err := os.CreateTemp(m.DlDir, tName)
+		if err != nil {
+			return fmt.Errorf("error creating %s: %v", tmpIPK.Name(), err)
+		}
+		defer tmpIPK.Close()
+		err = m.FetchToFile(tmpIPK, pkg)
+		if err != nil {
+			return fmt.Errorf("error fetching %s: %v", pkg.Name, err)
+		}
+		return nil
+	}
+
 	tmpIPK, err := os.CreateTemp(xdg.UserCacheDir(), "*."+tName)
 	if err != nil {
 		return fmt.Errorf("error creating %s: %v", tmpIPK.Name(), err)
@@ -672,6 +707,19 @@ func (m *OpkgManager) InstallPkg(pkg Package) error {
 
 func (m *OpkgManager) InstallUrl(url string, pkgName string) error {
 	tName := filepath.Base(url)
+	if m.DlDir != "" {
+		tmpIPK, err := os.CreateTemp(m.DlDir, tName)
+		if err != nil {
+			return fmt.Errorf("error creating %s: %v", tmpIPK.Name(), err)
+		}
+		defer tmpIPK.Close()
+		err = m.FetchUrlToFile(tmpIPK, filepath.Base(url), url)
+		if err != nil {
+			return fmt.Errorf("error fetching %s: %v", pkgName, err)
+		}
+		return nil
+	}
+
 	tmpIPK, err := os.CreateTemp(xdg.UserCacheDir(), "*."+tName)
 	if err != nil {
 		return fmt.Errorf("error creating %s: %v", tmpIPK.Name(), err)
@@ -1074,6 +1122,7 @@ func (r PkgCommand) Execute(args []string) int {
 	pm := NewOpkgManager(r.rootDir, r.repoBase)
 	pm.DryRun = r.dryRun
 	pm.NoRepo = r.noRepo
+	pm.DlDir = r.doDlOnly
 
 	if !r.noRepo {
 		if r.config != "" && xfile.FileExists(r.config) {
@@ -1094,7 +1143,11 @@ func (r PkgCommand) Execute(args []string) int {
 			pm.IndexName = XPKG_PKG_INDEX + ".gz"
 		}
 
-		if err := pm.Update(); err != nil {
+		if r.usePackagesXz {
+			pm.IndexName = XPKG_PKG_INDEX + ".xz"
+		}
+
+		if err := pm.Update(r.doDump); err != nil {
 			fmt.Printf("Update failed: %v\n", err)
 			//return 1
 		}
@@ -1104,6 +1157,7 @@ func (r PkgCommand) Execute(args []string) int {
 	if r.noDeps {
 		pm.NoDeps = true
 	}
+
 	if r.doSearchProvides {
 		if len(args) != 0 {
 			pm.ListProvides(args)

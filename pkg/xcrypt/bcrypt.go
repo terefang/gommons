@@ -50,6 +50,13 @@ func Prehash(password string) string {
 	return v
 }
 
+func VerifyBcrypt(given, encoded string) (bool, error) {
+	_dgst, _err := bcrypt.Decode(encoded)
+	if _err != nil {
+		return false, _err
+	}
+	return _dgst.MatchAdvanced(given)
+}
 func VerifyBcrypt2Z(given, encoded string) (bool, error) {
 	given = Prehash(given)
 	_encoded := []byte(encoded)

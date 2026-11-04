@@ -492,10 +492,15 @@ func (ic *IniConfig) Parse(s *bufio.Scanner) error {
 			continue
 		}
 
+		commentFound := false
 		for _, c := range ic.options.CommentStart {
 			if rune(l[0]) == c {
-				continue
+				commentFound = true
+				break
 			}
+		}
+		if commentFound {
+			continue
 		}
 
 		// read line continuation

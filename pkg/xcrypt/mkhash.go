@@ -7,6 +7,7 @@ import (
 	"github.com/go-crypt/crypt/algorithm/scrypt"
 	"github.com/go-crypt/crypt/algorithm/sha1crypt"
 	"github.com/go-crypt/crypt/algorithm/shacrypt"
+	"github.com/tredoe/crypt/apr1_crypt"
 )
 
 func GenerateCisco1Crypt(given string) string {
@@ -38,15 +39,15 @@ func GenerateMd5CryptWithSalt(given, salt string) string {
 }
 
 func GenerateApr1Crypt(given string) string {
-	_cry, _ := md5crypt.New()
-	_dgst, _ := _cry.Hash(given)
-	return "$apr1" + _dgst.String()[2:]
+	_cry := apr1_crypt.New()
+	_dgst, _ := _cry.Generate([]byte(given), []byte(""))
+	return _dgst
 }
 
 func GenerateApr1CryptWithSalt(given, salt string) string {
-	_cry, _ := md5crypt.New()
-	_dgst, _ := _cry.HashWithSalt(given, []byte(salt))
-	return "$apr1" + _dgst.String()[2:]
+	_cry := apr1_crypt.New()
+	_dgst, _ := _cry.Generate([]byte(given), []byte(salt))
+	return _dgst
 }
 
 func GenerateSha1Crypt(given string) string {

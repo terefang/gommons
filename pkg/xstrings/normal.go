@@ -26,8 +26,8 @@ import (
 //   - string: The normalized uppercase string containing only ASCII letters, digits, and inner underscores.
 //
 // Example:
-//   - NormalizeUpper("  hello-world! 123  ") -> "HELLO_WORLD__123"
-func NormalizeUpper(s string) string {
+//   - NormalizeUpper("  hello-world! 123  ", '_') -> "HELLO_WORLD__123"
+func NormalizeUpper(s string, p rune) string {
 	s = strings.ToUpper(s)
 	rs := []rune(s)
 	_sb := strings.Builder{}
@@ -37,10 +37,10 @@ func NormalizeUpper(s string) string {
 		} else if rs[i] >= '0' && rs[i] <= '9' {
 			_sb.WriteRune(rs[i])
 		} else {
-			_sb.WriteRune('_')
+			_sb.WriteRune(p)
 		}
 	}
-	return strings.Trim(_sb.String(), "_")
+	return strings.Trim(_sb.String(), string(p))
 }
 
 // NormalizeUpperCompact transforms an input string `s` into a compact, uppercase alphanumeric string.
@@ -60,8 +60,8 @@ func NormalizeUpper(s string) string {
 //   - string: The normalized uppercase string containing only ASCII letters, digits, and non-consecutive inner underscores.
 //
 // Example:
-//   - NormalizeUpperCompact("  hello---world!! 123  ") -> "HELLO_WORLD_123"
-func NormalizeUpperCompact(s string) string {
+//   - NormalizeUpperCompact("  hello---world!! 123  ", '_') -> "HELLO_WORLD_123"
+func NormalizeUpperCompact(s string, p rune) string {
 	s = strings.ToUpper(s)
 	rs := []rune(s)
 	_sb := strings.Builder{}
@@ -75,12 +75,12 @@ func NormalizeUpperCompact(s string) string {
 			lastWasUnderscore = false
 		} else {
 			if !lastWasUnderscore {
-				_sb.WriteRune('_')
+				_sb.WriteRune(p)
 			}
 			lastWasUnderscore = true
 		}
 	}
-	return strings.Trim(_sb.String(), "_")
+	return strings.Trim(_sb.String(), string(p))
 }
 
 // StripDiacritics removes combining accent marks from Latin characters via NFD.
@@ -101,4 +101,45 @@ func ToASCII(s string) string {
 
 	// Step 2: Transliterate remaining non-ASCII characters and scripts to ASCII
 	return anyascii.Transliterate(cleaned)
+}
+
+// RemoveAccents removes accents from the string. The resulting string only has
+// the letters from English alphabet. For example, "résumé" becomes "resume".
+func RemoveAccents(str string) string {
+	res, _ := StripDiacritics(str)
+	return res
+}
+
+const naturalSortPadWidth = 20
+
+// NaturalSortKey returns a string key that sorts naturally when compared
+// lexicographically. Numeric segments (ASCII digits) are zero-padded to 20
+// digits. Case is folded to lowercase. "file2" sorts before "file10".
+func NaturalSortKey(s string) string {
+	if s == "" {
+		return ""
+	}
+	var b strings.Builder
+	b.Grow(len(s) * 2)
+	i := 0
+	runes := []rune(strings.ToLower(s))
+	for i < len(runes) {
+		r := runes[i]
+		if r >= '0' && r <= '9' {
+			// Collect the full digit run.
+			start := i
+			for i < len(runes) && runes[i] >= '0' && runes[i] <= '9' {
+				i++
+			}
+			digits := string(runes[start:i])
+			if len(digits) < naturalSortPadWidth {
+				b.WriteString(strings.Repeat("0", naturalSortPadWidth-len(digits)))
+			}
+			b.WriteString(digits)
+		} else {
+			b.WriteRune(unicode.ToLower(r))
+			i++
+		}
+	}
+	return b.String()
 }

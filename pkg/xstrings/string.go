@@ -285,94 +285,6 @@ func IsEmail(s string) bool {
 	return strings.Contains(parts[1], ".")
 }
 
-// ToTitle converts the first letter of each word to uppercase.
-func ToTitle(s string) string {
-	return strings.Title(strings.ToLower(s))
-}
-
-// ToSnakeCase converts camelCase or PascalCase to snake_case.
-func ToSnakeCase(s string) string {
-	return CamelCaseToUnderscore(s)
-}
-
-// ToKebabCase converts camelCase, PascalCase, or snake_case to kebab-case.
-func ToKebabCase(s string) string {
-	if s == "" {
-		return s
-	}
-
-	// Handle kebab-case input
-	if strings.Contains(s, "-") && !strings.Contains(s, "_") {
-		return strings.ToLower(s)
-	}
-
-	// Handle snake_case input
-	if strings.Contains(s, "_") {
-		return strings.ReplaceAll(strings.ToLower(s), "_", "-")
-	}
-
-	// Handle camelCase or PascalCase input
-	snake := CamelCaseToUnderscore(s)
-	return strings.ReplaceAll(snake, "_", "-")
-}
-
-// ToPascalCase converts snake_case, kebab-case, or camelCase to PascalCase.
-func ToPascalCase(s string) string {
-	if s == "" {
-		return s
-	}
-
-	// Handle already PascalCase input
-	if !strings.Contains(s, "_") && !strings.Contains(s, "-") {
-		// If it's already PascalCase, return as is
-		if len(s) > 0 && IsUpperChar(rune(s[0])) {
-			return s
-		}
-		// If it's camelCase, convert to PascalCase
-		if len(s) > 0 {
-			return strings.ToUpper(string(s[0])) + s[1:]
-		}
-		return s
-	}
-
-	// Handle kebab-case input by converting to snake_case first
-	if strings.Contains(s, "-") && !strings.Contains(s, "_") {
-		s = strings.ReplaceAll(s, "-", "_")
-	}
-
-	// Handle snake_case input
-	return UnderscoreToCamelCase(s)
-}
-
-// ToCamelCase converts snake_case, kebab-case, or PascalCase to camelCase.
-func ToCamelCase(s string) string {
-	if s == "" {
-		return s
-	}
-
-	// Handle already camelCase or PascalCase input
-	if !strings.Contains(s, "_") && !strings.Contains(s, "-") {
-		// If it's already PascalCase, convert to camelCase
-		if len(s) > 0 && IsUpperChar(rune(s[0])) {
-			return strings.ToLower(string(s[0])) + s[1:]
-		}
-		// If it's already camelCase, return as is
-		return s
-	}
-
-	// Handle kebab-case input by converting to snake_case first
-	if strings.Contains(s, "-") && !strings.Contains(s, "_") {
-		s = strings.ReplaceAll(s, "-", "_")
-	}
-
-	// Handle snake_case input
-	pascal := UnderscoreToCamelCase(s)
-	if pascal == "" || len(pascal) == 0 {
-		return pascal
-	}
-	return strings.ToLower(string(pascal[0])) + pascal[1:]
-}
-
 // Reverse reverses the string.
 func Reverse(s string) string {
 	runes := []rune(s)
@@ -396,35 +308,6 @@ func RemoveDuplicates(s string) string {
 		}
 	}
 	return result.String()
-}
-
-// PadLeft pads the string to the left with the specified character to reach the target length.
-func PadLeft(s string, length int, padChar rune) string {
-	if len(s) >= length {
-		return s
-	}
-	padding := strings.Repeat(string(padChar), length-len(s))
-	return padding + s
-}
-
-// PadRight pads the string to the right with the specified character to reach the target length.
-func PadRight(s string, length int, padChar rune) string {
-	if len(s) >= length {
-		return s
-	}
-	padding := strings.Repeat(string(padChar), length-len(s))
-	return s + padding
-}
-
-// PadCenter pads the string on both sides with the specified character to reach the target length.
-func PadCenter(s string, length int, padChar rune) string {
-	if len(s) >= length {
-		return s
-	}
-	totalPadding := length - len(s)
-	leftPadding := totalPadding / 2
-	rightPadding := totalPadding - leftPadding
-	return strings.Repeat(string(padChar), leftPadding) + s + strings.Repeat(string(padChar), rightPadding)
 }
 
 // SplitAndTrim splits the string by separator and trims whitespace from each part.

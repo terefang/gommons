@@ -142,7 +142,7 @@ build-osarch-out _GOS _GARCH _GOUT: update-version-info
     _garch={{_GARCH}}
     _gout={{_GOUT}}
     echo "building ${_gos} ${_garch} ... ${_gout}"
-    GOOS=${_gos} GOARCH=${_garch} CGO_ENABLED=0 go build -buildmode=pie -o "{{XDIST}}/${_gout}" cmd/{{CLI}}/*.go
+    GOOS=${_gos} GOARCH=${_garch} CGO_ENABLED=0 go build -buildmode=pie -o "{{XDIST}}/${_gout}" -v cmd/{{CLI}}/*.go
 
 test-skey: build
     #!/bin/sh -x

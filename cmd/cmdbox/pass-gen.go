@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-crypt/crypt/algorithm/argon2"
-	"github.com/go-crypt/crypt/algorithm/bcrypt"
 	"github.com/go-crypt/crypt/algorithm/md5crypt"
 	"github.com/go-crypt/crypt/algorithm/pbkdf2"
 	"github.com/go-crypt/crypt/algorithm/scrypt"
@@ -250,18 +249,7 @@ func (p *passwordCommand) Execute(args []string) int {
 		fmt.Printf("SCRYPT: %s\n", _dgst.String())
 	}
 	if p.doAll || p.doBcrypt {
-		_cry, _ := bcrypt.New(bcrypt.WithCost(14))
-		_dgst, _ := _cry.Hash(string(buf))
-		if p.useSalt != "" {
-			_dgst, _ = _cry.HashWithSalt(string(buf), []byte(p.useSalt))
-		}
-		fmt.Printf("BCRYPT: %s\n", _dgst.String())
-		_cry, _ = bcrypt.NewSHA256(bcrypt.WithCost(14))
-		_dgst, _ = _cry.Hash(string(buf))
-		if p.useSalt != "" {
-			_dgst, _ = _cry.HashWithSalt(string(buf), []byte(p.useSalt))
-		}
-		fmt.Printf("BCRYPT: %s\n", _dgst.String())
+		fmt.Printf("BCRYPT: %s\n", xcrypt.GenerateBcrypt2Z(string(buf)))
 	}
 	if p.doAll || p.doPbkdf2 {
 		_cry, _ := pbkdf2.NewSHA1()
